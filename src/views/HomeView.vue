@@ -688,6 +688,11 @@ export default {
   color: #262626;        /* option text color */
 }
 
+.header .btn-add {
+  flex: 1;               /* each button takes equal space */
+  text-align: center;    /* center the text inside */
+  min-width: 120px;      /* optional: set a minimum width */
+}
 
 
 footer {
