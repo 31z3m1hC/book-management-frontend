@@ -56,7 +56,7 @@
             <div class="form-group checkbox-group">
               <label>
                 <input type="checkbox" v-model="form.published">
-                <span>Published: {{ form.published ? 'Yes (True)' : 'No (False)' }}</span>
+                <span>Published: {{ form.published ? 'True' : 'False' }}</span>
               </label>
             </div>
 
@@ -272,10 +272,7 @@ export default {
 </script>
 
 <style scoped>
-
-
-
-
+    <style>
         .btn-refresh {
             margin-left: 10px;
             background-color: #4caf50;
@@ -325,7 +322,7 @@ export default {
         }
 
         .btn-add:hover {
-            background: #ffbd3d;
+            background: greenyellow;
         }
 
         .search-section {
@@ -486,7 +483,7 @@ export default {
 
         .card {
             background: rgba(255, 255, 255, 0.12);
-            color: #fff;
+            color: white;
             border-radius: 12px;
             padding: 20px;
             backdrop-filter: blur(6px);
@@ -497,6 +494,8 @@ export default {
 
         .card:hover {
             transform: translateY(-3px);
+            background:magenta;
+
         }
 
         .card-menu {
@@ -573,8 +572,8 @@ export default {
             display: inline-block;
             padding: 5px 10px;
             border-radius: 999px;
-            background: #ffd166;
-            color: #262626;
+            background: green;
+            color: white;
             font-weight: 600;
             font-size: 0.85rem;
             margin-top: 12px;
