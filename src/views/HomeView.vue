@@ -186,10 +186,6 @@
         </article>
       </div>
     </div>
-
-    <footer>
-      © 2025 Node.js Demo • Data served from your backend
-    </footer>
   </div>
 </template>
 
@@ -223,7 +219,7 @@ export default {
         author: '',
         year: null,
         rating: null,
-        status: '' // "published", "unpublished", or ""
+        status: '' 
       }
 
     };
