@@ -688,20 +688,20 @@ export default {
   border: 2px solid #ddd;
   border-radius: 5px;
   font-size: 1rem;
-  background: #667eea;   /* blue background */
-  color: white;          /* white text */
-  appearance: none;      /* remove default browser arrow styling */
+  background: #667eea;   
+  color: white;          
+  appearance: none;      
 }
 
 .dropdown-input option {
-  background: white;     /* dropdown options background */
-  color: #262626;        /* option text color */
+  background: white;     
+  color: #262626;       
 }
 
 .header .btn-add {
-  flex: 1;               /* each button takes equal space */
-  text-align: center;    /* center the text inside */
-  min-width: 120px;      /* optional: set a minimum width */
+  flex: 1;               
+  text-align: center;    
+  min-width: 120px;      
 }
 
 
