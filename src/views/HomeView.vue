@@ -3,14 +3,10 @@
     <div class="container">
 
     <div class="top-bar">
-      <h1 class="app-title">Book Manager</h1>
-
+  
       <div class="profile-section">
         <!-- Profile picture -->
         <img src="@/assets/profile.png" alt="Profile" class="profile-pic" />
-
-        <!-- Logout as white clickable text -->
-        <a href="login.html" class="logout-link">Logout</a>
       </div>
     </div>
 
@@ -24,7 +20,7 @@
          <button class="btn-add counter-btn" disabled>
             Unpublished: {{ unpublishedCount }}
          </button>
-        <button @click="showAddForm = true" class="btn-add">Add New Book</button>
+        <button v-if="isAdmin" @click="showAddForm = true" class="btn-add">Add New Book</button>
         <button @click="refreshBooks" class="btn-add">Refresh</button>
         <button @click="showFilterForm = true" class="btn-add">Filter</button>
       </div>
@@ -149,8 +145,8 @@
           :key="book._id"
           class="card"
         >
-          <!-- Dropdown Menu Button -->
-          <div class="card-menu">
+          <!-- Dropdown Menu Button (Admin Only) -->
+          <div v-if="isAdmin" class="card-menu">
             <button @click="toggleMenu(book._id)" class="menu-btn">⋮</button>
           <div v-if="activeMenu === book._id" class="dropdown-menu">
               <button @click="editBook(book)" class="menu-item edit-item btn-add">Edit</button>
@@ -191,6 +187,7 @@
 
 <script>
 import api from '@/services/api';
+import auth from '@/views/utils/auth';
 
 export default {
   data() {
@@ -203,9 +200,10 @@ export default {
       loading: false,
       error: null,
       showAddForm: false,
-      showFilterForm: false, // NEW
+      showFilterForm: false,
       editingBook: null,
       activeMenu: null,
+      isAdmin: false,
       form: {
         title: '',
         author: '',
@@ -237,6 +235,7 @@ export default {
   },
 
   mounted() {
+    this.checkUserRole();
     this.loadBooks();
     document.addEventListener('click', this.closeMenuOnClickOutside);
   },
@@ -244,6 +243,11 @@ export default {
     document.removeEventListener('click', this.closeMenuOnClickOutside);
   },
   methods: {
+    checkUserRole() {
+      const user = auth.getUser();
+      this.isAdmin = user && user.role === 'admin';
+    },
+
     async loadBooks() {
       this.loading = true;
       this.error = null;
@@ -261,7 +265,7 @@ export default {
     },
 
     refreshBooks() {
-      this.loadBooks(); // reload all books
+      this.loadBooks();
     },
 
     updateLiveFilter() {
@@ -291,22 +295,19 @@ export default {
       this.searchQuery = '';
     },
 
-    // NEW: Apply filter criteria via modal
-      applyFilter() {
-        this.searchResults = this.books.filter(book => {
-          return (!this.filterCriteria.title || book.title.toLowerCase().includes(this.filterCriteria.title.toLowerCase())) &&
-                (!this.filterCriteria.author || book.author.toLowerCase().includes(this.filterCriteria.author.toLowerCase())) &&
-                (!this.filterCriteria.year || book.yearPublished === this.filterCriteria.year) &&
-                (!this.filterCriteria.rating || book.rating >= this.filterCriteria.rating) &&
-                (!this.filterCriteria.status ||
-                  (this.filterCriteria.status === 'published' && book.published) ||
-                  (this.filterCriteria.status === 'unpublished' && !book.published));
-        });
-        this.locked = true;
-        this.closeFilterForm();
-      },
-
-
+    applyFilter() {
+      this.searchResults = this.books.filter(book => {
+        return (!this.filterCriteria.title || book.title.toLowerCase().includes(this.filterCriteria.title.toLowerCase())) &&
+              (!this.filterCriteria.author || book.author.toLowerCase().includes(this.filterCriteria.author.toLowerCase())) &&
+              (!this.filterCriteria.year || book.yearPublished === this.filterCriteria.year) &&
+              (!this.filterCriteria.rating || book.rating >= this.filterCriteria.rating) &&
+              (!this.filterCriteria.status ||
+                (this.filterCriteria.status === 'published' && book.published) ||
+                (this.filterCriteria.status === 'unpublished' && !book.published));
+      });
+      this.locked = true;
+      this.closeFilterForm();
+    },
 
     closeFilterForm() {
       this.showFilterForm = false;
@@ -323,6 +324,11 @@ export default {
     },
 
     async saveBook() {
+      if (!this.isAdmin) {
+        alert('Only administrators can add or edit books.');
+        return;
+      }
+      
       try {
         if (this.editingBook) {
           await api.updateBook(this.editingBook._id, this.form);
@@ -337,12 +343,22 @@ export default {
     },
 
     editBook(book) {
+      if (!this.isAdmin) {
+        alert('Only administrators can edit books.');
+        return;
+      }
+      
       this.editingBook = book;
       this.form = { ...book };
       this.activeMenu = null;
     },
 
     async deleteBook(id) {
+      if (!this.isAdmin) {
+        alert('Only administrators can delete books.');
+        return;
+      }
+      
       if (!confirm('Delete this book?')) return;
       
       try {
@@ -396,9 +412,9 @@ export default {
 }
 
 .btn-add {
-  background-color: #ffc107; /* yellow */
+  background-color: #ffc107;
   color: #000;
-  padding: 8px 16px; /* consistent size */
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -434,19 +450,6 @@ export default {
   outline: none;
   border-color: #ffd166;
 }
-
-.btn-clear {
-  padding: 12px 20px;
-  background: #f15b5b;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-
-
 
 .btn-search {
   padding: 12px 25px;
@@ -488,7 +491,7 @@ export default {
 
 .form-container h2 {
   margin-bottom: 20px;
-  color: #667eea;
+  color: white;
 }
 
 .form-group {
@@ -546,13 +549,23 @@ export default {
 }
 
 .btn-save {
-  background:  #ffc107; 
+  background: #ffc107; 
   color: white;
 }
 
 .btn-cancel {
   background: #ddd;
   color: #262626;
+}
+
+.btn-save:hover {
+  background: greenyellow;
+  color: #000;
+}
+
+.btn-cancel:hover {
+  background: greenyellow;
+  color: #000;
 }
 
 .status {
@@ -670,18 +683,6 @@ export default {
   color: #fff;
 }
 
-
-.btn-save:hover {
-  background: greenyellow;
-  color: #000; /* optional, for contrast */
-}
-
-.btn-cancel:hover {
-  background: greenyellow;
-  color: #000;
-}
-
-
 .dropdown-input {
   width: 100%;
   padding: 10px;
@@ -704,98 +705,35 @@ export default {
   min-width: 120px;      
 }
 
-
-
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.app-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.profile-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-
-.logout-btn {
-  text-align: center;
-  size: 2px;
-  
-}
-
-
-
 .counter-btn {
   cursor: default;
   opacity: 0.95;
 }
+
 .counter-btn:hover {
   background-color: #ffc107;
 }
 
-.dropdown-input {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
-  background: #667eea;
-  color: white;
-  appearance: none;
-}
-
-.dropdown-input option {
-  background: white;
-  color: #262626;
-}
-
 .top-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
-  margin-bottom: 100px; /* moved content below downward */
-}
-
-.app-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fff;
+  margin-bottom: 30px;
 }
 
 .profile-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
 }
 
 .profile-pic {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #fff;
-}
-
-.logout-link {
-  color: white;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.95rem;
-}
-
-.logout-link:hover {
-  text-decoration: underline;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 footer {
