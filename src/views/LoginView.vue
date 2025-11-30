@@ -3,9 +3,6 @@
     <!-- Modal -->
     <div v-if="modal.show" class="modal show" @click="handleModalBackdropClick">
       <div class="modal-content">
-        <div :class="['modal-icon', modal.type]">
-          {{ modal.type === 'error' ? '' : '' }}
-        </div>
         <div class="modal-title">{{ modal.title }}</div>
         <div class="modal-message">{{ modal.message }}</div>
         <button class="modal-btn" @click="closeModal">OK</button>
@@ -226,7 +223,6 @@ export default {
     async handleLogin() {
       this.clearAllErrors()
       
-      // Validation
       if (!this.loginData.username.trim()) {
         this.errors.loginUsername = 'Username is required'
       }
@@ -239,7 +235,12 @@ export default {
       this.isLoading = true
       
       try {
-        const response = await fetch('http://localhost:3000/api/login', {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 
+          (import.meta.env.MODE === 'production'
+            ? 'https://book-manager-api.onrender.com/api'
+            : 'http://localhost:3000/api')
+        
+        const response = await fetch(`${API_URL}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -286,7 +287,6 @@ export default {
     async handleRegister() {
       this.clearAllErrors()
       
-      // Validation
       if (!this.registerData.fullName.trim()) {
         this.errors.regFullName = 'Full name is required'
       }
@@ -309,7 +309,12 @@ export default {
       this.isLoading = true
       
       try {
-        const response = await fetch('http://localhost:3000/api/register', {
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 
+          (import.meta.env.MODE === 'production'
+            ? 'https://book-manager-api.onrender.com/api'
+            : 'http://localhost:3000/api')
+        
+        const response = await fetch(`${API_URL}/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -524,19 +529,6 @@ input.error {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-40px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-icon {
-  font-size: 3rem;
-  margin-bottom: 10px;
-}
-
-.modal-icon.error { 
-  color: #d9534f; 
-}
-
-.modal-icon.success { 
-  color: #28a745; 
 }
 
 .modal-title {

@@ -1,0 +1,19 @@
+[build]
+  # Build command for Vue 3 + Vite
+  command = "npm run build"
+  
+  # Output directory (default for Vite)
+  publish = "dist"
+
+# SPA redirect rule - crucial for Vue Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables (configure these in Netlify dashboard)
+[context.production.environment]
+  NODE_ENV = "production"
+  
+[context.deploy-preview.environment]
+  NODE_ENV = "production"

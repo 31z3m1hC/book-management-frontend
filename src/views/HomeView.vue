@@ -563,7 +563,7 @@ export default {
   color: #000;
 }
 
-.btn-cancel:hover {
+.counter-btn,.btn-cancel:hover {
   background: greenyellow;
   color: #000;
 }
@@ -710,7 +710,7 @@ export default {
   opacity: 0.95;
 }
 
-.counter-btn:hover {
+.counter-btn {
   background-color: #ffc107;
 }
 

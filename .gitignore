@@ -81,6 +81,7 @@ dist/
 *.local
 *.cache
 *.log
+.DS_Store
 
 # Ignore config/json files (only if you want to)
 *.json
