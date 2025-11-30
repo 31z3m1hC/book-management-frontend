@@ -84,5 +84,3 @@ dist/
 .DS_Store
 
 # Ignore config/json files (only if you want to)
-vite.config.js
-jsconfig.json
