@@ -3,7 +3,7 @@ import axios from 'axios';
 // Use environment variable if available, otherwise fall back to defaults
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
   (import.meta.env.MODE === 'production'
-    ? 'https://book-manager-api.onrender.com/api'
+    ? 'https://book-manager-api-ym1o.onrender.com/api'
     : 'http://localhost:3000/api');
 
 const api = axios.create({
