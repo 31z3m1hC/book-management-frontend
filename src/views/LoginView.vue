@@ -313,7 +313,7 @@ export default {
       try {
         const API_URL = import.meta.env.VITE_API_BASE_URL || 
           (import.meta.env.MODE === 'production'
-            ? 'https://book-manager-api.onrender.com/api'
+            ? 'https://book-manager-api-ym1o.onrender.com/api'
             : 'http://localhost:3000/api')
         
         const response = await fetch(`${API_URL}/register`, {
