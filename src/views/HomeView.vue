@@ -404,14 +404,16 @@ export default {
   flex: 1;
 }
 
+
 .header {
   display: flex;
   margin-bottom: 20px;
-  gap: 12px; 
+  gap: 12px;
   justify-content: center;
+  flex-wrap: wrap;   
 }
 
-.btn-add {
+.header .btn-add {
   background-color: #ffc107;
   color: #000;
   padding: 8px 16px;
@@ -419,7 +421,18 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  text-align: center;
+  min-width: 120px;
+  flex: 0 0 auto;   
 }
+
+.header .btn-add:hover {
+  background: greenyellow;
+}
+
+
+
+
 
 .btn-add:hover {
   background: greenyellow;
@@ -741,5 +754,20 @@ footer {
   padding: 12px 0;
   font-size: 0.9rem;
   background: rgba(255, 255, 255, 0.1);
+
+
+  @media (max-width: 600px) {
+  .header {
+    flex-direction: column;   
+    align-items: stretch;
+  }
+
+  .header .btn-add {
+    width: 100%;             
+    font-size: 16px;          
+    margin-bottom: 8px;       
+  }
+}
+
 }
 </style>
