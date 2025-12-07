@@ -108,16 +108,16 @@
             <strong>Password must contain:</strong>
             <ul>
               <li :class="passwordReqs.length ? 'valid' : 'requirement'">
-                {{ passwordReqs.length ? '✓' : '✗' }} At least 6 characters
+                At least 6 characters
               </li>
               <li :class="passwordReqs.letter ? 'valid' : 'requirement'">
-                {{ passwordReqs.letter ? '✓' : '✗' }} At least one letter
+                At least one letter
               </li>
               <li :class="passwordReqs.number ? 'valid' : 'requirement'">
-                {{ passwordReqs.number ? '✓' : '✗' }} At least one number
+                At least one number
               </li>
               <li :class="passwordReqs.special ? 'valid' : 'requirement'">
-                {{ passwordReqs.special ? '✓' : '✗' }} One special character
+                One special character
               </li>
             </ul>
           </div>
