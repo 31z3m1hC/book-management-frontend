@@ -1,5 +1,17 @@
 <template>
   <div id="app">
+    <!-- Logout Confirmation Modal -->
+    <div v-if="showLogoutModal" class="modal show" @click="handleModalBackdropClick">
+      <div class="modal-content">
+        <div class="modal-title">Confirm Logout</div>
+        <div class="modal-message">Are you sure you want to logout?</div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" @click="closeLogoutModal">Cancel</button>
+          <button class="modal-btn modal-btn-confirm" @click="confirmLogout">Logout</button>
+        </div>
+      </div>
+    </div>
+
     <!-- App Header -->
     <header class="app-header">
       <div class="header-content">
@@ -8,7 +20,7 @@
         <!-- User Info & Logout (only show when authenticated) -->
         <div v-if="isAuthenticated" class="user-section">
           <span class="welcome-text">Welcome, {{ userName }}!</span>
-          <button @click="handleLogout" class="logout-btn">Logout</button>
+          <button @click="showLogoutModal = true" class="logout-btn">Logout</button>
         </div>
       </div>
     </header>
@@ -39,7 +51,8 @@ export default {
     return {
       isAuthenticated: false,
       userData: null,
-      userName: ''
+      userName: '',
+      showLogoutModal: false
     }
   },
   mounted() {
@@ -65,14 +78,24 @@ export default {
       this.userData = user
       this.userName = user?.fullName || user?.username || 'User'
     },
-    handleLogout() {
-      if (confirm('Are you sure you want to logout?')) {
-        auth.logout()
-        this.isAuthenticated = false
-        this.userData = null
-        this.userName = ''
-        this.$router.push({ name: 'login' })
+    handleModalBackdropClick(e) {
+      if (e.target.classList.contains('modal')) {
+        this.closeLogoutModal()
       }
+    },
+    closeLogoutModal() {
+      this.showLogoutModal = false
+    },
+    confirmLogout() {
+      this.closeLogoutModal()
+      auth.logout()
+      this.isAuthenticated = false
+      this.userData = null
+      this.userName = ''
+      this.$router.push({ name: 'login' })
+    },
+    handleLogout() {
+      this.showLogoutModal = true
     }
   }
 }
@@ -146,19 +169,19 @@ body {
 
 .logout-btn {
   padding: 8px 20px;
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffc107;
   border: 2px solid white;
-  color: white;
+  color: #000;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
 }
 
 .logout-btn:hover {
-  background: white;
-  color: #667eea;
+  background: greenyellow;
+  color: #000;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -211,5 +234,84 @@ body {
   .welcome-text {
     font-size: 0.85rem;
   }
+}
+
+/* Logout Modal Styling */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal.show { 
+  display: flex; 
+}
+
+.modal-content {
+  background: #fff;
+  color: #333;
+  width: 92%;
+  max-width: 400px;
+  border-radius: 12px;
+  padding: 35px 25px;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-title {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.modal-message { 
+  font-size: 0.95rem; 
+  color: #555; 
+  margin-bottom: 20px; 
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.modal-btn-cancel {
+  background: #ddd;
+  color: #262626;
+}
+
+.modal-btn-cancel:hover {
+  background: #c0c0c0;
+}
+
+.modal-btn-confirm {
+  background: #ffc107;
+  color: #000;
+}
+
+.modal-btn-confirm:hover {
+  background: greenyellow;
+  transform: translateY(-2px);
 }
 </style>

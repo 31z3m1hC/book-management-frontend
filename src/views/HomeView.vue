@@ -18,6 +18,7 @@
             Unpublished: {{ unpublishedCount }}
          </button>
         <button v-if="isAdmin" @click="showAddForm = true" class="btn-add">Add New Book</button>
+       
         <button @click="refreshBooks" class="btn-add">Refresh</button>
         <button @click="showFilterForm = true" class="btn-add">Filter</button>
       </div>
@@ -66,6 +67,16 @@
               <input v-model="form.isbn" required :disabled="editingBook">
             </div>
 
+            <div class="form-group">
+              <label>Book Content</label>
+              <textarea 
+                v-model="form.content" 
+                placeholder="Enter book content, chapters, or description..."
+                rows="8"
+                class="content-textarea"
+              ></textarea>
+            </div>
+
             <div class="form-group checkbox-group">
               <label>
                 <input type="checkbox" v-model="form.published">
@@ -78,6 +89,33 @@
               <button type="button" @click="closeForm" class="btn-cancel">Cancel</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Book Content Modal -->
+      <div v-if="showContentModal" class="modal show" @click="handleContentModalBackdropClick">
+        <div class="content-modal-container">
+          <div class="content-header">
+            <h2>{{ selectedBook?.title }}</h2>
+            <button @click="closeContentModal" class="close-btn">✕</button>
+          </div>
+          <div class="content-author">by {{ selectedBook?.author }}</div>
+          <div class="content-body">
+            <p v-if="selectedBook?.content">{{ selectedBook.content }}</p>
+            <p v-else class="no-content">No content available for this book.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div v-if="showDeleteModal" class="modal show" @click="handleDeleteModalBackdropClick">
+        <div class="modal-content">
+          <div class="modal-title">Confirm Delete</div>
+          <div class="modal-message">Are you sure you want to delete this book? This action cannot be undone.</div>
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" @click="closeDeleteModal">Cancel</button>
+            <button class="modal-btn modal-btn-delete" @click="confirmDelete">Delete</button>
+          </div>
         </div>
       </div>
 
@@ -138,13 +176,14 @@
           v-for="book in displayedBooks"
           :key="book._id"
           class="card"
+          @click="viewBookContent(book)"
         >
           <!-- Dropdown Menu Button (Admin Only) -->
           <div v-if="isAdmin" class="card-menu">
-            <button @click="toggleMenu(book._id)" class="menu-btn">⋮</button>
+            <button @click.stop="toggleMenu(book._id)" class="menu-btn">⋮</button>
           <div v-if="activeMenu === book._id" class="dropdown-menu">
-              <button @click="editBook(book)" class="menu-item edit-item btn-add">Edit</button>
-              <button @click="deleteBook(book._id)" class="menu-item delete-item btn-add">Delete</button>
+              <button @click.stop="editBook(book)" class="menu-item edit-item btn-add">Edit</button>
+              <button @click.stop="deleteBook(book._id)" class="menu-item delete-item btn-add">Delete</button>
           </div>
 
           </div>
@@ -204,6 +243,10 @@ export default {
       error: null,
       showAddForm: false,
       showFilterForm: false,
+      showDeleteModal: false,
+      showContentModal: false,
+      selectedBook: null,
+      bookToDelete: null,
       editingBook: null,
       activeMenu: null,
       isAdmin: false,
@@ -213,7 +256,8 @@ export default {
         yearPublished: new Date().getFullYear(),
         rating: 0,
         isbn: '',
-        published: false
+        published: false,
+        content: ''
       },
       filterCriteria: {
         title: '',
@@ -264,6 +308,87 @@ export default {
   methods: {
     checkUserRole() {
       this.isAdmin = this.userData && this.userData.role === 'admin';
+    },
+
+    async loadSampleBooks() {
+      if (!this.isAdmin) {
+        alert('Only administrators can load sample books.');
+        return;
+      }
+
+      const sampleBooks = [
+        {
+          title: "The Great Gatsby",
+          author: "F. Scott Fitzgerald",
+          yearPublished: 1925,
+          rating: 4.5,
+          isbn: "978-0743273565",
+          published: true,
+          content: `Chapter 1\n\nIn my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.\n\n"Whenever you feel like criticizing any one," he told me, "just remember that all the people in this world haven't had the advantages that you've had."\n\nHe didn't say any more, but we've always been unusually communicative in a reserved way, and I understood that he meant a great deal more than that. In consequence, I'm inclined to reserve all judgments, a habit that has opened up many curious natures to me and also made me the victim of not a few veteran bores.\n\nThe abnormal mind is quick to detect and attach itself to this quality when it appears in a normal person, and so it came about that in college I was unjustly accused of being a politician, because I was privy to the secret griefs of wild, unknown men.`
+        },
+        {
+          title: "1984",
+          author: "George Orwell",
+          yearPublished: 1949,
+          rating: 4.7,
+          isbn: "978-0451524935",
+          published: true,
+          content: `Part One\n\nChapter 1\n\nIt was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors of Victory Mansions, though not quickly enough to prevent a swirl of gritty dust from entering along with him.\n\nThe hallway smelt of boiled cabbage and old rag mats. At one end of it a coloured poster, too large for indoor display, had been tacked to the wall. It depicted simply an enormous face, more than a metre wide: the face of a man of about forty-five, with a heavy black moustache and ruggedly handsome features.\n\nWinston made for the stairs. It was no use trying the lift. Even at the best of times it was seldom working, and at present the electric current was cut off during daylight hours.`
+        },
+        {
+          title: "To Kill a Mockingbird",
+          author: "Harper Lee",
+          yearPublished: 1960,
+          rating: 4.8,
+          isbn: "978-0061120084",
+          published: true,
+          content: `Part One\n\nChapter 1\n\nWhen he was nearly thirteen, my brother Jem got his arm badly broken at the elbow. When it healed, and Jem's fears of never being able to play football were assuaged, he was seldom self-conscious about his injury. His left arm was somewhat shorter than his right; when he stood or walked, the back of his hand was at right angles to his body, his thumb parallel to his thigh.\n\nHe couldn't have cared less, so long as he could pass and punt.\n\nWhen enough years had gone by to enable us to look back on them, we sometimes discussed the events leading to his accident. I maintain that the Ewells started it all, but Jem, who was four years my senior, said it started long before that.`
+        },
+        {
+          title: "Pride and Prejudice",
+          author: "Jane Austen",
+          yearPublished: 1813,
+          rating: 4.6,
+          isbn: "978-0141439518",
+          published: true,
+          content: `Chapter 1\n\nIt is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.\n\nHowever little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters.\n\n"My dear Mr. Bennet," said his lady to him one day, "have you heard that Netherfield Park is let at last?"\n\nMr. Bennet replied that he had not.\n\n"But it is," returned she; "for Mrs. Long has just been here, and she told me all about it."\n\nMr. Bennet made no answer.`
+        },
+        {
+          title: "The Catcher in the Rye",
+          author: "J.D. Salinger",
+          yearPublished: 1951,
+          rating: 4.0,
+          isbn: "978-0316769174",
+          published: false,
+          content: `Chapter 1\n\nIf you really want to hear about it, the first thing you'll probably want to know is where I was born, and what my lousy childhood was like, and how my parents were occupied and all before they had me, and all that David Copperfield kind of crap, but I don't feel like going into it, if you want to know the truth.\n\nIn the first place, that stuff bores me, and in the second place, my parents would have about two hemorrhages apiece if I told anything pretty personal about them. They're quite touchy about anything like that, especially my father. They're nice and all—I'm not saying that—but they're also touchy as hell.`
+        }
+      ];
+
+      try {
+        this.loading = true;
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const book of sampleBooks) {
+          try {
+            await api.createBook(book);
+            successCount++;
+          } catch (err) {
+            errorCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          alert(`Successfully added ${successCount} sample books with content!${errorCount > 0 ? ` (${errorCount} already existed)` : ''}`);
+          this.loadBooks();
+        } else {
+          alert('All sample books already exist in the database.');
+        }
+      } catch (err) {
+        alert('Error loading sample books: ' + err.message);
+      } finally {
+        this.loading = false;
+      }
     },
 
     async loadBooks() {
@@ -337,6 +462,47 @@ export default {
       this.showFilterForm = false;
     },
 
+    handleDeleteModalBackdropClick(e) {
+      if (e.target.classList.contains('modal')) {
+        this.closeDeleteModal()
+      }
+    },
+
+    closeDeleteModal() {
+      this.showDeleteModal = false;
+      this.bookToDelete = null;
+    },
+
+    viewBookContent(book) {
+      this.selectedBook = book;
+      this.showContentModal = true;
+    },
+
+    handleContentModalBackdropClick(e) {
+      if (e.target.classList.contains('modal')) {
+        this.closeContentModal();
+      }
+    },
+
+    closeContentModal() {
+      this.showContentModal = false;
+      this.selectedBook = null;
+    },
+
+    async confirmDelete() {
+      if (!this.bookToDelete) return;
+      
+      try {
+        await api.deleteBook(this.bookToDelete);
+        this.loadBooks();
+        this.activeMenu = null;
+        this.closeDeleteModal();
+      } catch (err) {
+        alert('Error deleting book: ' + err.message);
+        this.closeDeleteModal();
+      }
+    },
+
     toggleMenu(bookId) {
       this.activeMenu = this.activeMenu === bookId ? null : bookId;
     },
@@ -383,15 +549,8 @@ export default {
         return;
       }
       
-      if (!confirm('Delete this book?')) return;
-      
-      try {
-        await api.deleteBook(id);
-        this.loadBooks();
-        this.activeMenu = null;
-      } catch (err) {
-        alert('Error deleting book: ' + err.message);
-      }
+      this.bookToDelete = id;
+      this.showDeleteModal = true;
     },
 
     closeForm() {
@@ -403,7 +562,8 @@ export default {
         yearPublished: new Date().getFullYear(),
         rating: 0,
         isbn: '',
-        published: false
+        published: false,
+        content: ''
       };
     }
   }
@@ -548,6 +708,17 @@ export default {
   background: #f5f5f5;
 }
 
+.content-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 150px;
+}
+
 .checkbox-group label {
   display: flex;
   align-items: center;
@@ -622,6 +793,7 @@ export default {
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .card:hover {
@@ -779,5 +951,149 @@ export default {
     font-size: 16px;          
     margin-bottom: 8px;       
   }
+}
+
+/* Delete Confirmation Modal */
+.modal.show { 
+  display: flex; 
+}
+
+.modal-content {
+  background: #fff;
+  color: #333;
+  width: 92%;
+  max-width: 400px;
+  border-radius: 12px;
+  padding: 35px 25px;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-title {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.modal-message { 
+  font-size: 0.95rem; 
+  color: #555; 
+  margin-bottom: 20px; 
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.modal-btn-cancel {
+  background: #ddd;
+  color: #262626;
+}
+
+.modal-btn-cancel:hover {
+  background: #c0c0c0;
+}
+
+.modal-btn-delete {
+  background: #f15b5b;
+  color: white;
+}
+
+.modal-btn-delete:hover {
+  background: #d84848;
+  transform: translateY(-2px);
+}
+
+/* Book Content Modal */
+.content-modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideDown 0.3s ease;
+}
+
+.content-header {
+  background: #667eea;
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.content-author {
+  padding: 15px 30px;
+  background: #f5f5f5;
+  color: #666;
+  font-style: italic;
+  border-bottom: 1px solid #ddd;
+}
+
+.content-body {
+  padding: 30px;
+  overflow-y: auto;
+  flex: 1;
+  color: #333;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.content-body p {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.no-content {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 40px 20px;
 }
 </style>
