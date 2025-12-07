@@ -143,12 +143,6 @@
 <script>
 export default {
   name: 'LoginView',
-  props: {
-    isAuthenticated: {
-      type: Boolean,
-      default: false
-    }
-  },
   data() {
     return {
       showRegisterForm: false,
@@ -176,19 +170,6 @@ export default {
         title: '',
         message: '',
         type: 'error'
-      }
-    }
-  },
-  mounted() {
-    // Redirect if already authenticated
-    if (this.isAuthenticated) {
-      this.$router.push({ name: 'home' })
-    }
-  },
-  watch: {
-    isAuthenticated(newVal) {
-      if (newVal) {
-        this.$router.push({ name: 'home' })
       }
     }
   },
@@ -278,9 +259,6 @@ export default {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
           
-          // Emit login success to parent
-          this.$emit('login-success', data.user)
-          
           this.showModal(
             'Login Successful!', 
             `Welcome back, ${data.user.fullName}!`, 
@@ -356,9 +334,6 @@ export default {
         if (data.success) {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
-          
-          // Emit login success to parent
-          this.$emit('login-success', data.user)
           
           this.showModal(
             'Registration Successful!', 
