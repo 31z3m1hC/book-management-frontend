@@ -15,7 +15,12 @@
 
     <!-- Main Content -->
     <main class="app-main">
-      <router-view />
+      <router-view 
+        :is-authenticated="isAuthenticated"
+        :user-data="userData"
+        @login-success="handleLoginSuccess"
+        @logout="handleLogout"
+      />
     </main>
 
     <!-- App Footer -->
@@ -33,6 +38,7 @@ export default {
   data() {
     return {
       isAuthenticated: false,
+      userData: null,
       userName: ''
     }
   },
@@ -47,13 +53,24 @@ export default {
     checkAuth() {
       this.isAuthenticated = auth.isAuthenticated()
       if (this.isAuthenticated) {
-        const user = auth.getUser()
-        this.userName = user?.fullName || user?.username || 'User'
+        this.userData = auth.getUser()
+        this.userName = this.userData?.fullName || this.userData?.username || 'User'
+      } else {
+        this.userData = null
+        this.userName = ''
       }
+    },
+    handleLoginSuccess(user) {
+      this.isAuthenticated = true
+      this.userData = user
+      this.userName = user?.fullName || user?.username || 'User'
     },
     handleLogout() {
       if (confirm('Are you sure you want to logout?')) {
         auth.logout()
+        this.isAuthenticated = false
+        this.userData = null
+        this.userName = ''
         this.$router.push({ name: 'login' })
       }
     }

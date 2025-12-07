@@ -1,0 +1,137 @@
+The development of the UI design is an extraction of my professors <style> section of his express js  code from his class exercises. The remaining code was built from different sources such as youtube: https://www.youtube.com/watch?v=QEcuSSnqvck, google.com searches, stackoverflow.com: https://stackoverflow.com/search?q=axios&s=d157b7ff-b86f-4efc-af8c-3e045f13faad, and assembled with the express help of Claude AI.
+
+
+Vue Component Refactoring Documentation
+
+Overview
+Refactored a Vue.js Book Manager application to use parent-child component communication via props and events, creating a single source of truth for authentication state.
+
+Architecture Changes
+
+Before
+- Each component (`LoginView.vue`, `HomeView.vue`) independently managed authentication using a shared `auth` utility
+- No centralized state management
+- Components directly accessed `localStorage` for user data
+
+After
+- App.vue (Parent) manages all authentication state
+- Child components receive data via props
+- Children communicate back via events
+
+Component Structure
+
+1. App.vue (Parent Component)
+Responsibilities:
+- Manages authentication state (`isAuthenticated`, `userData`, `userName`)
+- Provides authentication status to all child routes
+- Handles login/logout events
+
+Key Data:
+data() {
+  return {
+    isAuthenticated: false,
+    userData: null,
+    userName: ''
+  }
+}
+
+Props Passed to Children:
+<router-view 
+  :is-authenticated="isAuthenticated"
+  :user-data="userData"
+  @login-success="handleLoginSuccess"
+  @logout="handleLogout"
+/>
+
+
+Methods:
+- `checkAuth()` - Reads auth state from localStorage on mount
+- `handleLoginSuccess(user)` - Updates state when user logs in
+- `handleLogout()` - Clears state and redirects to login
+
+
+2. LoginView.vue (Child Component)
+Props Received:
+props: {
+  isAuthenticated: {
+    type: Boolean,
+    default: false
+  }
+}
+
+Events Emitted:
+this.$emit('login-success', data.user)
+
+
+Key Features:
+- Receives `isAuthenticated` from parent
+- Emits `login-success` event with user data after successful login/register
+- Auto-redirects if already authenticated (via prop watcher)
+- All UI and validation logic preserved
+
+
+3. HomeView.vue (Child Component)
+Props Received:
+props: {
+  isAuthenticated: {
+    type: Boolean,
+    default: false
+  },
+  userData: {
+    type: Object,
+    default: null
+  }
+}
+
+Key Changes:
+- Uses `userData.role` instead of calling `auth.getUser()` directly
+- Watches `userData` prop for changes to update admin status
+- Auto-redirects to login if `isAuthenticated` becomes false
+- All book management functionality preserved
+
+
+
+Data Flow
+
+Login Flow:
+1. User submits login form in `LoginView`
+2. `LoginView` saves token/user to localStorage
+3. `LoginView` emits `@login-success` event with user data
+4. `App.vue` receives event via `handleLoginSuccess()`
+5. `App.vue` updates `isAuthenticated` and `userData`
+6. Props cascade down to all child components
+7. User redirected to home page
+
+Logout Flow:
+1. User clicks logout in `App.vue` header
+2. `App.vue` calls `handleLogout()`
+3. Clears localStorage and resets state
+4. Props update triggers watchers in children
+5. `HomeView` detects `isAuthenticated = false` and redirects to login
+
+
+Benefits
+
+Single Source of Truth - Authentication state managed in one place (App.vue)  
+Better Reactivity - Changes in parent automatically propagate to children  
+Cleaner Code - No duplicate auth checks across components  
+Easier Debugging - State changes flow in predictable direction (parent → children)  
+Preserved Functionality** - All original features and UI remain intact  
+Scalable - Easy to add more child components that need auth state
+
+
+
+Technical Implementation
+
+Communication Pattern:
+- Downward: Props (parent → children)
+- Upward: Events (children → parent)
+
+Watchers Added:
+
+// In LoginView & HomeView
+watch: {
+  isAuthenticated(newVal) {
+    // React to authentication changes
+  }
+}

@@ -3,14 +3,11 @@
     <div class="container">
 
     <div class="top-bar">
-  
       <div class="profile-section">
         <!-- Profile picture -->
         <img src="@/assets/profile.png" alt="Profile" class="profile-pic" />
       </div>
     </div>
-
-
 
       <!-- Header Buttons -->
       <div class="header">
@@ -119,9 +116,6 @@
               </select>
           </div>
 
-
-
-
             <div class="form-actions">
               <button type="submit" class="btn-save">Apply Filter</button>
               <button type="button" @click="closeFilterForm" class="btn-cancel">Cancel</button>
@@ -187,9 +181,18 @@
 
 <script>
 import api from '@/services/api';
-import auth from '@/views/utils/auth';
 
 export default {
+  props: {
+    isAuthenticated: {
+      type: Boolean,
+      default: false
+    },
+    userData: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return {
       books: [],
@@ -219,7 +222,6 @@ export default {
         rating: null,
         status: '' 
       }
-
     };
   },
   computed: {
@@ -233,19 +235,35 @@ export default {
       return this.books.filter(book => !book.published).length;
     }
   },
-
   mounted() {
     this.checkUserRole();
     this.loadBooks();
     document.addEventListener('click', this.closeMenuOnClickOutside);
+    
+    // Redirect if not authenticated
+    if (!this.isAuthenticated) {
+      this.$router.push({ name: 'login' })
+    }
   },
   beforeUnmount() {
     document.removeEventListener('click', this.closeMenuOnClickOutside);
   },
+  watch: {
+    isAuthenticated(newVal) {
+      if (!newVal) {
+        this.$router.push({ name: 'login' })
+      }
+    },
+    userData: {
+      handler() {
+        this.checkUserRole()
+      },
+      deep: true
+    }
+  },
   methods: {
     checkUserRole() {
-      const user = auth.getUser();
-      this.isAdmin = user && user.role === 'admin';
+      this.isAdmin = this.userData && this.userData.role === 'admin';
     },
 
     async loadBooks() {
@@ -295,18 +313,24 @@ export default {
       this.searchQuery = '';
     },
 
-    applyFilter() {
-      this.searchResults = this.books.filter(book => {
-        return (!this.filterCriteria.title || book.title.toLowerCase().includes(this.filterCriteria.title.toLowerCase())) &&
-              (!this.filterCriteria.author || book.author.toLowerCase().includes(this.filterCriteria.author.toLowerCase())) &&
-              (!this.filterCriteria.year || book.yearPublished === this.filterCriteria.year) &&
-              (!this.filterCriteria.rating || book.rating >= this.filterCriteria.rating) &&
-              (!this.filterCriteria.status ||
-                (this.filterCriteria.status === 'published' && book.published) ||
-                (this.filterCriteria.status === 'unpublished' && !book.published));
-      });
-      this.locked = true;
-      this.closeFilterForm();
+  applyFilter() {
+    const f = this.filterCriteria;
+
+    this.searchResults = this.books.filter(b => {
+      const matchTitle = !f.title || b.title.toLowerCase().includes(f.title.toLowerCase());
+      const matchAuthor = !f.author || b.author.toLowerCase().includes(f.author.toLowerCase());
+      const matchYear = f.year == null || f.year === '' || b.yearPublished === f.year;
+      const matchRating = f.rating == null || f.rating === '' || b.rating === f.rating;
+      const matchStatus =
+        !f.status ||
+        (f.status === 'published' && b.published) ||
+        (f.status === 'unpublished' && !b.published);
+
+      return matchTitle && matchAuthor && matchYear && matchRating && matchStatus;
+    });
+
+    this.locked = true;
+    this.closeFilterForm();
     },
 
     closeFilterForm() {
@@ -404,7 +428,6 @@ export default {
   flex: 1;
 }
 
-
 .header {
   display: flex;
   margin-bottom: 20px;
@@ -429,10 +452,6 @@ export default {
 .header .btn-add:hover {
   background: greenyellow;
 }
-
-
-
-
 
 .btn-add:hover {
   background: greenyellow;
@@ -749,14 +768,7 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-footer {
-  text-align: center;
-  padding: 12px 0;
-  font-size: 0.9rem;
-  background: rgba(255, 255, 255, 0.1);
-
-
-  @media (max-width: 600px) {
+@media (max-width: 600px) {
   .header {
     flex-direction: column;   
     align-items: stretch;
@@ -767,7 +779,5 @@ footer {
     font-size: 16px;          
     margin-bottom: 8px;       
   }
-}
-
 }
 </style>
