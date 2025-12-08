@@ -1,6 +1,5 @@
 <template>
   <div class="login-wrapper">
-    <!-- Modal -->
     <div v-if="modal.show" class="modal show" @click="handleModalBackdropClick">
       <div class="modal-content">
         <div class="modal-title">{{ modal.title }}</div>
@@ -14,7 +13,6 @@
       <p class="subtitle" v-if="!showRegisterForm">Login</p>
       <p class="subtitle" v-else>Register</p>
 
-      <!-- Login Form -->
       <form v-if="!showRegisterForm" @submit.prevent="handleLogin">
         <div class="form-group">
           <label>Username</label>
@@ -52,10 +50,8 @@
         </div>
       </form>
 
-      <!-- Register Form -->
       <form v-else @submit.prevent="handleRegister">
         <div class="form-group">
-          
           <label>Full Name</label>
           <input 
             type="text" 
@@ -143,6 +139,12 @@
 <script>
 export default {
   name: 'LoginView',
+  props: {
+    isAuthenticated: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       showRegisterForm: false,
@@ -171,6 +173,11 @@ export default {
         message: '',
         type: 'error'
       }
+    }
+  },
+  mounted() {
+    if (this.isAuthenticated) {
+      this.$router.push({ name: 'home' })
     }
   },
   methods: {
@@ -259,6 +266,8 @@ export default {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
           
+          this.$emit('login-success', data.user)
+          
           this.showModal(
             'Login Successful!', 
             `Welcome back, ${data.user.fullName}!`, 
@@ -334,6 +343,8 @@ export default {
         if (data.success) {
           localStorage.setItem('token', data.token)
           localStorage.setItem('user', JSON.stringify(data.user))
+          
+          this.$emit('login-success', data.user)
           
           this.showModal(
             'Registration Successful!', 
@@ -502,7 +513,6 @@ input.error {
   text-decoration: underline; 
 }
 
-/* Modal Styling */
 .modal {
   display: none;
   position: fixed;
