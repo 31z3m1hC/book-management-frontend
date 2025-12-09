@@ -1,31 +1,27 @@
 <template>
   <div class="page">
     <div class="container">
-
-    <div class="topBar">
-      <div class="profileSection">
-        <!-- Profile picture -->
-        <img src="@/assets/profile.png" alt="Profile" class="profilePic" />
+      <div class="topBar">
+        <div class="profileSection">
+          <img src="@/assets/profile.png" alt="Profile" class="profilePic" />
+        </div>
       </div>
-    </div>
 
-      <!-- Header Buttons -->
       <div class="header">
-          <button class="buttonAdd counterButton" disabled>
-            Published: {{ publishedCount }}
-          </button>
-         <button class="buttonAdd counterButton" disabled>
-            Unpublished: {{ unpublishedCount }}
-         </button>
+        <button class="buttonAdd counterButton" disabled>
+          Published: {{ publishedCount }}
+        </button>
+        <button class="buttonAdd counterButton" disabled>
+          Unpublished: {{ unpublishedCount }}
+        </button>
         <button v-if="isAdmin" @click="showAddForm = true" class="buttonAdd">Add New Book</button>
-       
         <button @click="refreshBooks" class="buttonAdd">Refresh</button>
         <button @click="showFilterForm = true" class="buttonAdd">Filter</button>
       </div>
 
       <!-- Search Bar -->
       <div class="searchSection">
-        <input 
+        <input
           v-model="searchQuery" 
           @input="updateLiveFilter"
           @keyup.enter="handleSearch"
@@ -44,29 +40,32 @@
               <label>Title</label>
               <input v-model="form.title" required>
             </div>
-
             <div class="formGroup">
               <label>Author</label>
               <input v-model="form.author" required>
             </div>
-
             <div class="formRow">
               <div class="formGroup">
                 <label>Year</label>
                 <input v-model.number="form.yearPublished" type="number" required>
               </div>
-
               <div class="formGroup">
                 <label>Rating</label>
                 <input v-model.number="form.rating" type="number" min="0" max="5" step="0.1" required>
               </div>
             </div>
-
             <div class="formGroup">
               <label>ISBN</label>
               <input v-model="form.isbn" required :disabled="editingBook">
             </div>
-
+            <div class="formGroup">
+              <label>Book Image URL</label>
+              <input v-model="form.image" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="formGroup">
+              <label>Book Link (Online)</label>
+              <input v-model="form.link" placeholder="https://example.com/book">
+            </div>
             <div class="formGroup">
               <label>Book Content</label>
               <textarea 
@@ -76,14 +75,12 @@
                 class="content-textarea"
               ></textarea>
             </div>
-
             <div class="formGroup checkboxGroup">
               <label>
                 <input type="checkbox" v-model="form.published">
                 <span>Published: {{ form.published ? 'True' : 'False' }}</span>
               </label>
             </div>
-
             <div class="formActions">
               <button type="submit" class="saveButton">Save</button>
               <button type="button" @click="closeForm" class="cancelButton">Cancel</button>
@@ -103,6 +100,11 @@
           <div class="contentBody">
             <p v-if="selectedBook?.content">{{ selectedBook.content }}</p>
             <p v-else class="noContent">No content available for this book.</p>
+            <div v-if="selectedBook?.link" class="linkSection">
+              <a :href="selectedBook.link" target="_blank" rel="noopener noreferrer" class="readOnlineBtn">
+                Read Online
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -128,12 +130,10 @@
               <label>Title</label>
               <input v-model="filterCriteria.title" placeholder="Filter by title">
             </div>
-
             <div class="formGroup">
               <label>Author</label>
               <input v-model="filterCriteria.author" placeholder="Filter by author">
             </div>
-
             <div class="formRow">
               <div class="formGroup">
                 <label>Year</label>
@@ -144,16 +144,14 @@
                 <input v-model.number="filterCriteria.rating" type="number" min="0" max="5" step="0.1">
               </div>
             </div>
-
-          <div class="formGroup">
-            <label>Publication Status</label>
+            <div class="formGroup">
+              <label>Publication Status</label>
               <select v-model="filterCriteria.status" class="dropdownInput">
                   <option value="">All</option>
                   <option value="published">Published</option>
                   <option value="unpublished">Unpublished</option>
               </select>
-          </div>
-
+            </div>
             <div class="formActions">
               <button type="submit" class="saveButton">Apply Filter</button>
               <button type="button" @click="closeFilterForm" class="cancelButton">Cancel</button>
@@ -162,11 +160,8 @@
         </div>
       </div>
 
-      <!-- Status / Grid -->
       <div v-if="loading" class="status">Loading…</div>
-
       <div v-else-if="error" class="status">Error: {{ error }}</div>
-
       <div v-else-if="displayedBooks.length === 0" class="status">
         {{ searchQuery ? 'No books match your search.' : 'No books available.' }}
       </div>
@@ -176,42 +171,46 @@
           v-for="book in displayedBooks"
           :key="book._id"
           class="card"
-          @click="viewBookContent(book)"
         >
-          <!-- Dropdown Menu Button (Admin Only) -->
           <div v-if="isAdmin" class="cardMenu">
             <button @click.stop="toggleMenu(book._id)" class="menuButton">⋮</button>
-          <div v-if="activeMenu === book._id" class="dropdownMenu">
+            <div v-if="activeMenu === book._id" class="dropdownMenu">
               <button @click.stop="editBook(book)" class="menuItem editItem buttonAdd">Edit</button>
               <button @click.stop="deleteBook(book._id)" class="menuItem deleteItem buttonAdd">Delete</button>
+            </div>
           </div>
-
+          
+          <div class="cardImageContainer" @click="openBookLink(book)">
+            <img 
+              v-if="book.image" 
+              :src="book.image" 
+              :alt="book.title"
+              class="bookCover"
+              @error="handleImageError"
+            >
+            <div v-else class="placeholderCover">
+              <span>📚</span>
+            </div>
           </div>
-
-          <h3>{{ book.title }}</h3>
-
-          <div class="meta">
-            <span>Author: <strong>{{ book.author }}</strong></span>
+          
+          <div @click="viewBookContent(book)" class="cardContent">
+            <h3>{{ book.title }}</h3>
+            <div class="meta">
+              <span>Author: <strong>{{ book.author }}</strong></span>
+            </div>
+            <div class="meta">
+              <span>Year: <strong>{{ book.yearPublished }}</strong></span>
+            </div>
+            <div class="meta">
+              <span>ISBN: <strong>{{ book.isbn }}</strong></span>
+            </div>
+            <div class="meta">
+              <span>Rating: <strong>{{ book.rating }}/5</strong></span>
+            </div>
+            <span class="badge" :class="{ secondary: !book.published }">
+              {{ book.published ? "Published" : "Unpublished" }}
+            </span>
           </div>
-
-          <div class="meta">
-            <span>Year: <strong>{{ book.yearPublished }}</strong></span>
-          </div>
-
-          <div class="meta">
-            <span>ISBN: <strong>{{ book.isbn }}</strong></span>
-          </div>
-
-          <div class="meta">
-            <span>Rating: <strong>{{ book.rating }}/5</strong></span>
-          </div>
-
-          <span
-            class="badge"
-            :class="{ secondary: !book.published }"
-          >
-            {{ book.published ? "Published" : "Unpublished" }}
-          </span>
         </article>
       </div>
     </div>
@@ -219,356 +218,300 @@
 </template>
 
 <script>
-import api from '@/services/api';
+    import { 
+      //loadSampleBooks as loadSampleBooksService, 
+      loadBooks as fetchBooks,
+      deleteBook as deleteBookService,
+      createBook as createBookService,
+      updateBook as updateBookService
+    } from '@/services/bookService';
 
-export default {
-  props: {
-    isAuthenticated: {
-      type: Boolean,
-      default: false
-    },
-    userData: {
-      type: Object,
-      default: null
-    }
-  },
-  data() {
-    return {
-      books: [],
-      searchQuery: '',
-      liveFiltered: [],
-      searchResults: [],
-      locked: false,
-      loading: false,
-      error: null,
-      showAddForm: false,
-      showFilterForm: false,
-      showDeleteModal: false,
-      showContentModal: false,
-      selectedBook: null,
-      bookToDelete: null,
-      editingBook: null,
-      activeMenu: null,
-      isAdmin: false,
-      form: {
-        title: '',
-        author: '',
-        yearPublished: new Date().getFullYear(),
-        rating: 0,
-        isbn: '',
-        published: false,
-        content: ''
+
+    export default {
+      props: {
+        isAuthenticated: { type: Boolean, default: false },
+        userData: { type: Object, default: null }
       },
-      filterCriteria: {
-        title: '',
-        author: '',
-        year: null,
-        rating: null,
-        status: '' 
+
+      data() {
+        return {
+          books: [],
+          searchQuery: '',
+          liveFiltered: [],
+          searchResults: [],
+          locked: false,
+          loading: false,
+          error: null,
+
+          showAddForm: false,
+          showFilterForm: false,
+          showDeleteModal: false,
+          showContentModal: false,
+
+          selectedBook: null,
+          bookToDelete: null,
+          editingBook: null,
+          activeMenu: null,
+
+          isAdmin: false,
+
+          form: {
+            title: '',
+            author: '',
+            yearPublished: new Date().getFullYear(),
+            rating: 0,
+            isbn: '',
+            published: false,
+            content: '',
+            image: '',
+            link: ''
+          },
+
+          filterCriteria: {
+            title: '',
+            author: '',
+            year: null,
+            rating: null,
+            status: ''
+          }
+        };
+      },
+
+      computed: {
+        displayedBooks() {
+          return this.locked ? this.searchResults : this.liveFiltered;
+        },
+
+        publishedCount() {
+          return this.books.filter(b => b.published).length;
+        },
+
+        unpublishedCount() {
+          return this.books.filter(b => !b.published).length;
+        }
+      },
+
+      mounted() {
+        this.checkUserRole();
+        this.loadBooks();
+
+        document.addEventListener('click', this.closeMenuOnClickOutside);
+
+        if (!this.isAuthenticated) {
+          this.$router.push({ name: 'login' });
+        }
+      },
+
+      beforeUnmount() {
+        document.removeEventListener('click', this.closeMenuOnClickOutside);
+      },
+
+      watch: {
+        isAuthenticated(newVal) {
+          if (!newVal) this.$router.push({ name: 'login' });
+        },
+
+        userData: {
+          handler() {
+            this.checkUserRole();
+          },
+          deep: true
+        }
+      },
+
+      methods: {
+        checkUserRole() {
+          this.isAdmin = this.userData && this.userData.role === 'admin';
+        },
+
+        async loadSampleBooks() {
+          await loadSampleBooksService(this.isAdmin, this.loadBooks);
+        },
+
+        async loadBooks() {
+          this.loading = true;
+          this.error = null;
+
+          try {
+            const books = await fetchBooks();
+            this.books = books;
+            this.liveFiltered = books;
+            this.searchResults = [];
+            this.locked = false;
+          } catch (err) {
+            this.error = err.message;
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        refreshBooks() {
+          this.loadBooks();
+        },
+
+        updateLiveFilter() {
+          const q = this.searchQuery.toLowerCase();
+
+          this.liveFiltered = this.books.filter(book =>
+            book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q) ||
+            book.isbn.toLowerCase().includes(q) ||
+            book.yearPublished.toString().includes(q) ||
+            (book.published && "published".includes(q)) ||
+            (!book.published && "unpublished".includes(q))
+          );
+
+          this.locked = false;
+        },
+
+        handleSearch() {
+          const q = this.searchQuery.toLowerCase();
+
+          this.searchResults = this.books.filter(book =>
+            book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q) ||
+            book.isbn.toLowerCase().includes(q) ||
+            book.yearPublished.toString().includes(q) ||
+            (book.published && "published".includes(q)) ||
+            (!book.published && "unpublished".includes(q))
+          );
+
+          this.locked = true;
+          this.searchQuery = "";
+        },
+
+        applyFilter() {
+          const f = this.filterCriteria;
+
+          this.searchResults = this.books.filter(b => {
+            const matchTitle = !f.title || b.title.toLowerCase().includes(f.title.toLowerCase());
+            const matchAuthor = !f.author || b.author.toLowerCase().includes(f.author.toLowerCase());
+            const matchYear = !f.year || b.yearPublished === f.year;
+            const matchRating = !f.rating || b.rating === f.rating;
+            const matchStatus =
+              !f.status ||
+              (f.status === "published" && b.published) ||
+              (f.status === "unpublished" && !b.published);
+
+            return matchTitle && matchAuthor && matchYear && matchRating && matchStatus;
+          });
+
+          this.locked = true;
+          this.closeFilterForm();
+        },
+
+        closeFilterForm() {
+          this.showFilterForm = false;
+        },
+
+        openBookLink(book) {
+          if (book.link) {
+            window.open(book.link, '_blank', 'noopener,noreferrer');
+          }
+        },
+
+        viewBookContent(book) {
+          this.selectedBook = book;
+          this.showContentModal = true;
+        },
+
+        closeContentModal() {
+          this.showContentModal = false;
+          this.selectedBook = null;
+        },
+
+        handleContentModalBackdropClick(e) {
+          if (e.target.classList.contains("modal")) this.closeContentModal();
+        },
+
+        handleDeleteModalBackdropClick(e) {
+          if (e.target.classList.contains("modal")) this.closeDeleteModal();
+        },
+
+        handleImageError(e) {
+          e.target.style.display = 'none';
+          e.target.parentElement.innerHTML = '<div class="placeholderCover"><span>📚</span></div>';
+        },
+
+        async confirmDelete() {
+          if (!this.bookToDelete) return;
+
+          try {
+            await deleteBookService(this.bookToDelete);
+            await this.loadBooks();
+          } catch (err) {
+            alert("Error deleting book: " + err.message);
+          } finally {
+            this.closeDeleteModal();
+          }
+        },
+
+        closeDeleteModal() {
+          this.showDeleteModal = false;
+          this.bookToDelete = null;
+        },
+
+        async deleteBook(id) {
+          this.bookToDelete = id;
+          this.showDeleteModal = true;
+        },
+
+        toggleMenu(bookId) {
+          this.activeMenu = this.activeMenu === bookId ? null : bookId;
+        },
+
+        closeMenuOnClickOutside(e) {
+          if (!e.target.closest(".cardMenu")) {
+            this.activeMenu = null;
+          }
+        },
+
+        async saveBook() {
+          if (!this.isAdmin) {
+            alert("Only administrators can add or edit books.");
+            return;
+          }
+
+          try {
+            if (this.editingBook) {
+              await updateBookService(this.editingBook._id, this.form);
+            } else {
+              await createBookService(this.form);
+            }
+
+            this.closeForm();
+            this.loadBooks();
+          } catch (err) {
+            alert("Error saving book: " + err.message);
+          }
+        },
+
+        editBook(book) {
+          this.editingBook = book;
+          this.form = { ...book };
+          this.activeMenu = null;
+        },
+
+        closeForm() {
+          this.showAddForm = false;
+          this.editingBook = null;
+
+          this.form = {
+            title: "",
+            author: "",
+            yearPublished: new Date().getFullYear(),
+            rating: 0,
+            isbn: "",
+            published: false,
+            content: "",
+            image: "",
+            link: ""
+          };
+        }
       }
     };
-  },
-  computed: {
-    displayedBooks() {
-      return this.locked ? this.searchResults : this.liveFiltered;
-    },
-    publishedCount() {
-      return this.books.filter(book => book.published).length;
-    },
-    unpublishedCount() {
-      return this.books.filter(book => !book.published).length;
-    }
-  },
-  mounted() {
-    this.checkUserRole();
-    this.loadBooks();
-    document.addEventListener('click', this.closeMenuOnClickOutside);
-    
-    // Redirect if not authenticated
-    if (!this.isAuthenticated) {
-      this.$router.push({ name: 'login' })
-    }
-  },
-  beforeUnmount() {
-    document.removeEventListener('click', this.closeMenuOnClickOutside);
-  },
-  watch: {
-    isAuthenticated(newVal) {
-      if (!newVal) {
-        this.$router.push({ name: 'login' })
-      }
-    },
-    userData: {
-      handler() {
-        this.checkUserRole()
-      },
-      deep: true
-    }
-  },
-  methods: {
-    checkUserRole() {
-      this.isAdmin = this.userData && this.userData.role === 'admin';
-    },
-
-    async loadSampleBooks() {
-      if (!this.isAdmin) {
-        alert('Only administrators can load sample books.');
-        return;
-      }
-
-      const sampleBooks = [
-        {
-          title: "The Great Gatsby",
-          author: "F. Scott Fitzgerald",
-          yearPublished: 1925,
-          rating: 4.5,
-          isbn: "978-0743273565",
-          published: true,
-          content: `Chapter 1\n\nIn my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.\n\n"Whenever you feel like criticizing any one," he told me, "just remember that all the people in this world haven't had the advantages that you've had."\n\nHe didn't say any more, but we've always been unusually communicative in a reserved way, and I understood that he meant a great deal more than that. In consequence, I'm inclined to reserve all judgments, a habit that has opened up many curious natures to me and also made me the victim of not a few veteran bores.\n\nThe abnormal mind is quick to detect and attach itself to this quality when it appears in a normal person, and so it came about that in college I was unjustly accused of being a politician, because I was privy to the secret griefs of wild, unknown men.`
-        },
-        {
-          title: "1984",
-          author: "George Orwell",
-          yearPublished: 1949,
-          rating: 4.7,
-          isbn: "978-0451524935",
-          published: true,
-          content: `Part One\n\nChapter 1\n\nIt was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors of Victory Mansions, though not quickly enough to prevent a swirl of gritty dust from entering along with him.\n\nThe hallway smelt of boiled cabbage and old rag mats. At one end of it a coloured poster, too large for indoor display, had been tacked to the wall. It depicted simply an enormous face, more than a metre wide: the face of a man of about forty-five, with a heavy black moustache and ruggedly handsome features.\n\nWinston made for the stairs. It was no use trying the lift. Even at the best of times it was seldom working, and at present the electric current was cut off during daylight hours.`
-        },
-        {
-          title: "To Kill a Mockingbird",
-          author: "Harper Lee",
-          yearPublished: 1960,
-          rating: 4.8,
-          isbn: "978-0061120084",
-          published: true,
-          content: `Part One\n\nChapter 1\n\nWhen he was nearly thirteen, my brother Jem got his arm badly broken at the elbow. When it healed, and Jem's fears of never being able to play football were assuaged, he was seldom self-conscious about his injury. His left arm was somewhat shorter than his right; when he stood or walked, the back of his hand was at right angles to his body, his thumb parallel to his thigh.\n\nHe couldn't have cared less, so long as he could pass and punt.\n\nWhen enough years had gone by to enable us to look back on them, we sometimes discussed the events leading to his accident. I maintain that the Ewells started it all, but Jem, who was four years my senior, said it started long before that.`
-        },
-        {
-          title: "Pride and Prejudice",
-          author: "Jane Austen",
-          yearPublished: 1813,
-          rating: 4.6,
-          isbn: "978-0141439518",
-          published: true,
-          content: `Chapter 1\n\nIt is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.\n\nHowever little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters.\n\n"My dear Mr. Bennet," said his lady to him one day, "have you heard that Netherfield Park is let at last?"\n\nMr. Bennet replied that he had not.\n\n"But it is," returned she; "for Mrs. Long has just been here, and she told me all about it."\n\nMr. Bennet made no answer.`
-        },
-        {
-          title: "The Catcher in the Rye",
-          author: "J.D. Salinger",
-          yearPublished: 1951,
-          rating: 4.0,
-          isbn: "978-0316769174",
-          published: false,
-          content: `Chapter 1\n\nIf you really want to hear about it, the first thing you'll probably want to know is where I was born, and what my lousy childhood was like, and how my parents were occupied and all before they had me, and all that David Copperfield kind of crap, but I don't feel like going into it, if you want to know the truth.\n\nIn the first place, that stuff bores me, and in the second place, my parents would have about two hemorrhages apiece if I told anything pretty personal about them. They're quite touchy about anything like that, especially my father. They're nice and all—I'm not saying that—but they're also touchy as hell.`
-        }
-      ];
-
-      try {
-        this.loading = true;
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const book of sampleBooks) {
-          try {
-            await api.createBook(book);
-            successCount++;
-          } catch (err) {
-            errorCount++;
-          }
-        }
-
-        if (successCount > 0) {
-          alert(`Successfully added ${successCount} sample books with content!${errorCount > 0 ? ` (${errorCount} already existed)` : ''}`);
-          this.loadBooks();
-        } else {
-          alert('All sample books already exist in the database.');
-        }
-      } catch (err) {
-        alert('Error loading sample books: ' + err.message);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async loadBooks() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await api.getAllBooks();
-        this.books = response.data.data;
-        this.liveFiltered = this.books;
-        this.searchResults = [];
-        this.locked = false;
-      } catch (err) {
-        this.error = err.message;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    refreshBooks() {
-      this.loadBooks();
-    },
-
-    updateLiveFilter() {
-      const query = this.searchQuery.toLowerCase();
-      this.liveFiltered = this.books.filter(book =>
-        book.title.toLowerCase().includes(query) ||
-        book.author.toLowerCase().includes(query) ||
-        book.isbn.toLowerCase().includes(query) ||
-        book.yearPublished.toString().includes(query) ||
-        (book.published && 'published'.includes(query)) ||
-        (!book.published && 'unpublished'.includes(query))
-      );
-      this.locked = false;
-    },
-
-    handleSearch() {
-      const query = this.searchQuery.toLowerCase();
-      this.searchResults = this.books.filter(book =>
-        book.title.toLowerCase().includes(query) ||
-        book.author.toLowerCase().includes(query) ||
-        book.isbn.toLowerCase().includes(query) ||
-        book.yearPublished.toString().includes(query) ||
-        (book.published && 'published'.includes(query)) ||
-        (!book.published && 'unpublished'.includes(query))
-      );
-      this.locked = true;
-      this.searchQuery = '';
-    },
-
-  applyFilter() {
-    const f = this.filterCriteria;
-
-    this.searchResults = this.books.filter(b => {
-      const matchTitle = !f.title || b.title.toLowerCase().includes(f.title.toLowerCase());
-      const matchAuthor = !f.author || b.author.toLowerCase().includes(f.author.toLowerCase());
-      const matchYear = f.year == null || f.year === '' || b.yearPublished === f.year;
-      const matchRating = f.rating == null || f.rating === '' || b.rating === f.rating;
-      const matchStatus =
-        !f.status ||
-        (f.status === 'published' && b.published) ||
-        (f.status === 'unpublished' && !b.published);
-
-      return matchTitle && matchAuthor && matchYear && matchRating && matchStatus;
-    });
-
-    this.locked = true;
-    this.closeFilterForm();
-    },
-
-    closeFilterForm() {
-      this.showFilterForm = false;
-    },
-
-    handleDeleteModalBackdropClick(e) {
-      if (e.target.classList.contains('modal')) {
-        this.closeDeleteModal()
-      }
-    },
-
-    closeDeleteModal() {
-      this.showDeleteModal = false;
-      this.bookToDelete = null;
-    },
-
-    viewBookContent(book) {
-      this.selectedBook = book;
-      this.showContentModal = true;
-    },
-
-    handleContentModalBackdropClick(e) {
-      if (e.target.classList.contains('modal')) {
-        this.closeContentModal();
-      }
-    },
-
-    closeContentModal() {
-      this.showContentModal = false;
-      this.selectedBook = null;
-    },
-
-    async confirmDelete() {
-      if (!this.bookToDelete) return;
-      
-      try {
-        await api.deleteBook(this.bookToDelete);
-        this.loadBooks();
-        this.activeMenu = null;
-        this.closeDeleteModal();
-      } catch (err) {
-        alert('Error deleting book: ' + err.message);
-        this.closeDeleteModal();
-      }
-    },
-
-    toggleMenu(bookId) {
-      this.activeMenu = this.activeMenu === bookId ? null : bookId;
-    },
-
-    closeMenuOnClickOutside(event) {
-      if (!event.target.closest('.cardMenu')) {
-        this.activeMenu = null;
-      }
-    },
-
-    async saveBook() {
-      if (!this.isAdmin) {
-        alert('Only administrators can add or edit books.');
-        return;
-      }
-      
-      try {
-        if (this.editingBook) {
-          await api.updateBook(this.editingBook._id, this.form);
-        } else {
-          await api.createBook(this.form);
-        }
-        this.closeForm();
-        this.loadBooks();
-      } catch (err) {
-        alert('Error saving book: ' + err.message);
-      }
-    },
-
-    editBook(book) {
-      if (!this.isAdmin) {
-        alert('Only administrators can edit books.');
-        return;
-      }
-      
-      this.editingBook = book;
-      this.form = { ...book };
-      this.activeMenu = null;
-    },
-
-    async deleteBook(id) {
-      if (!this.isAdmin) {
-        alert('Only administrators can delete books.');
-        return;
-      }
-      
-      this.bookToDelete = id;
-      this.showDeleteModal = true;
-    },
-
-    closeForm() {
-      this.showAddForm = false;
-      this.editingBook = null;
-      this.form = {
-        title: '',
-        author: '',
-        yearPublished: new Date().getFullYear(),
-        rating: 0,
-        isbn: '',
-        published: false,
-        content: ''
-      };
-    }
-  }
-};
 </script>
+
 
 <style scoped>
 .page {
@@ -788,27 +731,65 @@ export default {
   background: rgba(255, 255, 255, 0.12);
   color: white;
   border-radius: 12px;
-  padding: 20px;
+  overflow: hidden;
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   position: relative;
-  cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  background: magenta;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+.cardImageContainer {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bookCover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.cardImageContainer:hover .bookCover {
+  transform: scale(1.05);
+}
+
+.placeholderCover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.cardContent {
+  padding: 20px;
+  cursor: pointer;
+  flex: 1;
 }
 
 .cardMenu {
   position: absolute;
   top: 10px;
   right: 10px;
+  z-index: 10;
 }
 
 .menuButton {
-  background: rgba(255,255,255,0.2);
+  background: rgba(0, 0, 0, 0.6);
   color: white;
   border: none;
   width: 30px;
@@ -823,7 +804,7 @@ export default {
 }
 
 .menuButton:hover {
-  background: rgba(255,255,255,0.3);
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .dropdownMenu {
@@ -938,6 +919,30 @@ export default {
   object-fit: cover;
   border: 3px solid #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.linkSection {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+  text-align: center;
+}
+
+.readOnlineBtn {
+  display: inline-block;
+  padding: 12px 30px;
+  background: #667eea;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.readOnlineBtn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 @media (max-width: 600px) {
