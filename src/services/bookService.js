@@ -1,64 +1,59 @@
 // src/services/bookService.js
 import api from './api.js';
 
-const sampleBooks = [
-  {
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    yearPublished: 1925,
-    rating: 4.5,
-    isbn: "978-0743273565",
-    published: true,
-    link: "https://www.gutenberg.org/ebooks/64317",
-    image: "https://www.gutenberg.org/cache/epub/64317/pg64317.cover.medium.jpg"
-  },
-  {
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    yearPublished: 1813,
-    rating: 4.6,
-    isbn: "978-0141439518",
-    published: true,
-    link: "https://www.gutenberg.org/ebooks/1342",
-    image: "https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg"
-  },
-  {
-    title: "Frankenstein",
-    author: "Mary Shelley",
-    yearPublished: 1818,
-    rating: 4.4,
-    isbn: "978-0486282114",
-    published: true,
-    link: "https://www.gutenberg.org/ebooks/84",
-    image: "https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg"
-  },
-  {
-    title: "Dracula",
-    author: "Bram Stoker",
-    yearPublished: 1897,
-    rating: 4.3,
-    isbn: "978-0486411095",
-    published: true,
-    link: "https://www.gutenberg.org/ebooks/345",
-    image: "https://www.gutenberg.org/cache/epub/345/pg345.cover.medium.jpg"
-  },
-  {
-    title: "Alice's Adventures in Wonderland",
-    author: "Lewis Carroll",
-    yearPublished: 1865,
-    rating: 4.7,
-    isbn: "978-0486275437",
-    published: true,
-    link: "https://www.gutenberg.org/ebooks/11",
-    image: "https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg"
-  }
-];
-
 export async function loadSampleBooks(isAdmin, loadBooksCallback) {
   if (!isAdmin) {
     alert('Only administrators can load sample books.');
     return;
   }
+
+  const sampleBooks = [
+    {
+      title: "The Great Gatsby",
+      author: "F. Scott Fitzgerald",
+      yearPublished: 1925,
+      rating: 4.5,
+      isbn: "978-0743273565",
+      published: true,
+      content: "https://www.gutenberg.org/ebooks/64317"
+    },
+    {
+      title: "Pride and Prejudice",
+      author: "Jane Austen",
+      yearPublished: 1813,
+      rating: 4.6,
+      isbn: "978-0141439518",
+      published: true,
+      content: "https://www.gutenberg.org/ebooks/1342"
+    },
+    {
+      title: "Alice's Adventures in Wonderland",
+      author: "Lewis Carroll",
+      yearPublished: 1865,
+      rating: 4.5,
+      isbn: "978-0141439761",
+      published: true,
+      content: "https://www.gutenberg.org/ebooks/11"
+    },
+    {
+      title: "A Christmas Carol",
+      author: "Charles Dickens",
+      yearPublished: 1843,
+      rating: 4.7,
+      isbn: "978-0486268651",
+      published: true,
+      content: "https://www.gutenberg.org/ebooks/46"
+    },
+    {
+      title: "The Adventures of Tom Sawyer",
+      author: "Mark Twain",
+      yearPublished: 1876,
+      rating: 4.2,
+      isbn: "978-0143107330",
+      published: true,
+      content: "https://www.gutenberg.org/ebooks/74"
+    }
+  ];
 
   try {
     let successCount = 0;
@@ -90,7 +85,8 @@ export async function loadBooks() {
 }
 
 export async function deleteBook(id) {
-  return await api.deleteBook(id);
+  const response = await api.deleteBook(id);
+  return response.data;
 }
 
 export async function createBook(bookData) {

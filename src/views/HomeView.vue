@@ -21,7 +21,7 @@
 
       <!-- Search Bar -->
       <div class="searchSection">
-        <input
+        <input 
           v-model="searchQuery" 
           @input="updateLiveFilter"
           @keyup.enter="handleSearch"
@@ -59,18 +59,10 @@
               <input v-model="form.isbn" required :disabled="editingBook">
             </div>
             <div class="formGroup">
-              <label>Book Image URL</label>
-              <input v-model="form.image" placeholder="https://example.com/image.jpg">
-            </div>
-            <div class="formGroup">
-              <label>Book Link (Online)</label>
-              <input v-model="form.link" placeholder="https://example.com/book">
-            </div>
-            <div class="formGroup">
-              <label>Book Content</label>
-              <textarea 
-                v-model="form.content" 
-                placeholder="Enter book content, chapters, or description..."
+              <label>Book Content / Online Link</label>
+              <textarea
+                v-model="form.content"
+                placeholder="Enter book content, chapters, or online link..."
                 rows="8"
                 class="content-textarea"
               ></textarea>
@@ -89,25 +81,15 @@
         </div>
       </div>
 
-      <!-- Book Content Modal -->
-      <div v-if="showContentModal" class="modal show" @click="handleContentModalBackdropClick">
-        <div class="contentModalContainer">
-          <div class="contentHeader">
-            <h2>{{ selectedBook?.title }}</h2>
-            <button @click="closeContentModal" class="closeButton">✕</button>
-          </div>
-          <div class="contentAuthor">by {{ selectedBook?.author }}</div>
-          <div class="contentBody">
-            <p v-if="selectedBook?.content">{{ selectedBook.content }}</p>
-            <p v-else class="noContent">No content available for this book.</p>
-            <div v-if="selectedBook?.link" class="linkSection">
-              <a :href="selectedBook.link" target="_blank" rel="noopener noreferrer" class="readOnlineBtn">
-                Read Online
-              </a>
-            </div>
+      <!-- Error Toast Notification -->
+      <transition name="toast">
+        <div v-if="showToast" class="toast">
+          <div class="toastContent">
+            <span class="toastIcon">⚠️</span>
+            <span class="toastMessage">{{ toastMessage }}</span>
           </div>
         </div>
-      </div>
+      </transition>
 
       <!-- Delete Confirmation Modal -->
       <div v-if="showDeleteModal" class="modal show" @click="handleDeleteModalBackdropClick">
@@ -171,6 +153,7 @@
           v-for="book in displayedBooks"
           :key="book._id"
           class="card"
+          @click="openBookLink(book)"
         >
           <div v-if="isAdmin" class="cardMenu">
             <button @click.stop="toggleMenu(book._id)" class="menuButton">⋮</button>
@@ -180,20 +163,7 @@
             </div>
           </div>
           
-          <div class="cardImageContainer" @click="openBookLink(book)">
-            <img 
-              v-if="book.image" 
-              :src="book.image" 
-              :alt="book.title"
-              class="bookCover"
-              @error="handleImageError"
-            >
-            <div v-else class="placeholderCover">
-              <span>📚</span>
-            </div>
-          </div>
-          
-          <div @click="viewBookContent(book)" class="cardContent">
+          <div class="cardContent">
             <h3>{{ book.title }}</h3>
             <div class="meta">
               <span>Author: <strong>{{ book.author }}</strong></span>
@@ -219,7 +189,7 @@
 
 <script>
     import { 
-      //loadSampleBooks as loadSampleBooksService, 
+      loadSampleBooks as loadSampleBooksService, 
       loadBooks as fetchBooks,
       deleteBook as deleteBookService,
       createBook as createBookService,
@@ -246,7 +216,8 @@
           showAddForm: false,
           showFilterForm: false,
           showDeleteModal: false,
-          showContentModal: false,
+          showToast: false,
+          toastMessage: '',
 
           selectedBook: null,
           bookToDelete: null,
@@ -262,9 +233,7 @@
             rating: 0,
             isbn: '',
             published: false,
-            content: '',
-            image: '',
-            link: ''
+            content: ''
           },
 
           filterCriteria: {
@@ -404,43 +373,59 @@
           this.showFilterForm = false;
         },
 
+        handleCardClick(book) {
+          this.openBookLink(book);
+        },
+
         openBookLink(book) {
-          if (book.link) {
-            window.open(book.link, '_blank', 'noopener,noreferrer');
+          // Check if content exists and has some value
+          if (!book.content || book.content.trim() === '') {
+            this.showErrorToast('This book has no link available');
+            return;
           }
+
+          // Open the link directly
+          window.open(book.content, '_blank', 'noopener,noreferrer');
+        },
+
+        isValidUrl(string) {
+          // Removed - not needed anymore
+        },
+
+        showErrorToast(message) {
+          this.toastMessage = message;
+          this.showToast = true;
+          
+          setTimeout(() => {
+            this.showToast = false;
+          }, 3000);
         },
 
         viewBookContent(book) {
-          this.selectedBook = book;
-          this.showContentModal = true;
+          // Removed - no longer needed
         },
 
         closeContentModal() {
-          this.showContentModal = false;
-          this.selectedBook = null;
+          // Removed - no longer needed
         },
 
         handleContentModalBackdropClick(e) {
-          if (e.target.classList.contains("modal")) this.closeContentModal();
+          // Removed - no longer needed
         },
 
         handleDeleteModalBackdropClick(e) {
           if (e.target.classList.contains("modal")) this.closeDeleteModal();
         },
 
-        handleImageError(e) {
-          e.target.style.display = 'none';
-          e.target.parentElement.innerHTML = '<div class="placeholderCover"><span>📚</span></div>';
-        },
-
         async confirmDelete() {
           if (!this.bookToDelete) return;
 
           try {
-            await deleteBookService(this.bookToDelete);
+            const response = await deleteBookService(this.bookToDelete);
             await this.loadBooks();
           } catch (err) {
-            alert("Error deleting book: " + err.message);
+            console.error('Delete error:', err);
+            alert("Error deleting book: " + (err.response?.data?.message || err.message));
           } finally {
             this.closeDeleteModal();
           }
@@ -490,6 +475,7 @@
           this.editingBook = book;
           this.form = { ...book };
           this.activeMenu = null;
+          this.showAddForm = true;
         },
 
         closeForm() {
@@ -503,9 +489,7 @@
             rating: 0,
             isbn: "",
             published: false,
-            content: "",
-            image: "",
-            link: ""
+            content: ""
           };
         }
       }
@@ -731,54 +715,22 @@
   background: rgba(255, 255, 255, 0.12);
   color: white;
   border-radius: 12px;
-  overflow: hidden;
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   position: relative;
-  display: flex;
-  flex-direction: column;
+  padding: 20px;
 }
 
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
-}
-
-.cardImageContainer {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  cursor: pointer;
-  position: relative;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.bookCover {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.cardImageContainer:hover .bookCover {
-  transform: scale(1.05);
-}
-
-.placeholderCover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .cardContent {
-  padding: 20px;
-  cursor: pointer;
   flex: 1;
+  cursor: pointer;
 }
 
 .cardMenu {
@@ -789,22 +741,23 @@
 }
 
 .menuButton {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   color: white;
   border: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.3s;
+  font-weight: bold;
 }
 
 .menuButton:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .dropdownMenu {
@@ -1027,78 +980,49 @@
   transform: translateY(-2px);
 }
 
-/* Book Content Modal */
-.contentModalContainer {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 85vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+/* Toast Notification */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: #f15b5b;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   animation: slideDown 0.3s ease;
 }
 
-.contentHeader {
-  background: #667eea;
-  color: white;
-  padding: 20px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.contentHeader h2 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.closeButton {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  cursor: pointer;
+.toastContent {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.3s;
+  gap: 12px;
 }
 
-.closeButton:hover {
-  background: rgba(255, 255, 255, 0.3);
+.toastIcon {
+  font-size: 1.2rem;
 }
 
-.contentAuthor {
-  padding: 15px 30px;
-  background: #f5f5f5;
-  color: #666;
-  font-style: italic;
-  border-bottom: 1px solid #ddd;
+.toastMessage {
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
-.contentBody {
-  padding: 30px;
-  overflow-y: auto;
-  flex: 1;
-  color: #333;
-  line-height: 1.8;
-  font-size: 1rem;
+.toast-enter-active, .toast-leave-active {
+  transition: all 0.3s ease;
 }
 
-.contentBody p {
-  white-space: pre-wrap;
-  margin: 0;
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
 }
 
-.noContent {
-  color: #999;
-  font-style: italic;
-  text-align: center;
-  padding: 40px 20px;
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
 }
+
+
 </style>
