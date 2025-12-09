@@ -1,33 +1,27 @@
 <template>
   <div id="app">
-    <!-- Logout Confirmation Modal -->
-    <div v-if="showLogoutModal" class="modal show" @click="handleModalBackdropClick">
-      <div class="modal-content">
-        <div class="modal-title">Confirm Logout</div>
-        <div class="modal-message">Are you sure you want to logout?</div>
-        <div class="modal-actions">
-          <button class="modal-btn modal-btn-cancel" @click="closeLogoutModal">Cancel</button>
-          <button class="modal-btn modal-btn-confirm" @click="confirmLogout">Logout</button>
-        </div>
-      </div>
-    </div>
+    <!-- LogoutModal Component -->
+    <LogoutView
+      :show="showLogoutModal"
+      @cancel="closeLogoutModal"
+      @confirm="confirmLogout"
+    />
 
     <!-- App Header -->
-    <header class="app-header">
-      <div class="header-content">
+    <header class="appHeader">
+      <div class="headerContent">
         <h1>Book Manager</h1>
-        
-        <!-- User Info & Logout (only show when authenticated) -->
-        <div v-if="isAuthenticated" class="user-section">
-          <span class="welcome-text">Welcome, {{ userName }}!</span>
-          <button @click="showLogoutModal = true" class="logout-btn">Logout</button>
+
+        <div v-if="isAuthenticated" class="userSection">
+          <span class="welcomeText">Welcome, {{ userName }}!</span>
+          <button @click="showLogoutModal = true" class="logoutButton">Logout</button>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="app-main">
-      <router-view 
+    <main class="appMain">
+      <router-view
         :is-authenticated="isAuthenticated"
         :user-data="userData"
         @login-success="handleLoginSuccess"
@@ -35,283 +29,220 @@
       />
     </main>
 
-    <!-- App Footer -->
-    <footer class="app-footer">
+    <footer class="appFooter">
       © 2025 Book Manager • Powered by Vue & Node.js
     </footer>
   </div>
 </template>
 
 <script>
-import auth from '@/views/utils/auth'
+  import { ref, onMounted, watch } from 'vue'
+  import { useRouter, useRoute } from 'vue-router'
+  import auth from '@/views/utils/auth'
+  import LogoutView from '@/views/LogoutView.vue'
 
-export default {
-  name: 'App',
-  data() {
-    return {
-      isAuthenticated: false,
-      userData: null,
-      userName: '',
-      showLogoutModal: false
-    }
-  },
-  mounted() {
-    this.checkAuth()
-    // Update auth state when route changes
-    this.$watch('$route', () => {
-      this.checkAuth()
-    })
-  },
-  methods: {
-    checkAuth() {
-      this.isAuthenticated = auth.isAuthenticated()
-      if (this.isAuthenticated) {
-        this.userData = auth.getUser()
-        this.userName = this.userData?.fullName || this.userData?.username || 'User'
-      } else {
-        this.userData = null
-        this.userName = ''
+  export default {
+    name: 'App',
+    components: { LogoutView },
+
+    setup() {
+      const router = useRouter()
+      const route = useRoute()
+
+      const isAuthenticated = ref(false)
+      const userData = ref(null)
+      const userName = ref('')
+      const showLogoutModal = ref(false)
+
+      const checkAuth = () => {
+        isAuthenticated.value = auth.isAuthenticated()
+        if (isAuthenticated.value) {
+          userData.value = auth.getUser()
+          userName.value = userData.value?.fullName || userData.value?.username || 'User'
+        } else {
+          userData.value = null
+          userName.value = ''
+        }
       }
-    },
-    handleLoginSuccess(user) {
-      this.isAuthenticated = true
-      this.userData = user
-      this.userName = user?.fullName || user?.username || 'User'
-    },
-    handleModalBackdropClick(e) {
-      if (e.target.classList.contains('modal')) {
-        this.closeLogoutModal()
+
+      const handleLoginSuccess = (user) => {
+        isAuthenticated.value = true
+        userData.value = user
+        userName.value = user.fullName || user.username || 'User'
       }
-    },
-    closeLogoutModal() {
-      this.showLogoutModal = false
-    },
-    confirmLogout() {
-      this.closeLogoutModal()
-      auth.logout()
-      this.isAuthenticated = false
-      this.userData = null
-      this.userName = ''
-      this.$router.push({ name: 'login' })
-    },
-    handleLogout() {
-      this.showLogoutModal = true
+
+      const closeLogoutModal = () => {
+        showLogoutModal.value = false
+      }
+
+      const confirmLogout = () => {
+        closeLogoutModal()
+        auth.logout()
+        isAuthenticated.value = false
+        userData.value = null
+        userName.value = ''
+        router.push({ name: 'login' })
+      }
+
+      const handleLogout = () => {
+        showLogoutModal.value = true
+      }
+
+      onMounted(() => {
+        checkAuth()
+      })
+
+      watch(route, () => {
+        checkAuth()
+      })
+
+      return {
+        isAuthenticated,
+        userData,
+        userName,
+        showLogoutModal,
+        checkAuth,
+        handleLoginSuccess,
+        closeLogoutModal,
+        confirmLogout,
+        handleLogout
+      }
     }
   }
-}
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Poppins', Arial, sans-serif;
-  min-height: 100vh;
-}
-
-#app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* Background gradient only for authenticated pages */
-#app:not(:has(.login-wrapper)) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* Header */
-.app-header {
-  padding: 20px 30px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Hide header on login page */
-#app:has(.login-wrapper) .app-header {
-  display: none;
-}
-
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.app-header h1 {
-  color: white;
-  font-size: 2rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  font-weight: 700;
-}
-
-/* User Section */
-.user-section {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.welcome-text {
-  color: white;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.logout-btn {
-  padding: 8px 20px;
-  background: #ffc107;
-  border: 2px solid white;
-  color: #000;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.logout-btn:hover {
-  background: greenyellow;
-  color: #000;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Main content */
-.app-main {
-  flex: 1;
-  padding: 20px;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-/* Remove padding on login page for full-screen experience */
-#app:has(.login-wrapper) .app-main {
-  padding: 0;
-  max-width: 100%;
-}
-
-/* Footer */
-.app-footer {
-  text-align: center;
-  padding: 15px;
-  color: white;
-  font-size: 0.9rem;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-/* Hide footer on login page */
-#app:has(.login-wrapper) .app-footer {
-  display: none;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .app-header h1 {
-    font-size: 1.5rem;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-  
-  .header-content {
-    justify-content: center;
-    text-align: center;
+
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    min-height: 100vh;
   }
-  
-  .user-section {
+
+  #app {
+    display: flex;
     flex-direction: column;
-    gap: 10px;
+    min-height: 100vh;
   }
-  
-  .welcome-text {
-    font-size: 0.85rem;
+
+  /* Background gradient only for authenticated pages */
+  #app:not(:has(.loginWrapper)) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
-}
 
-/* Logout Modal Styling */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
+  /* Header */
+  .appHeader {
+    padding: 20px 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
 
-.modal.show { 
-  display: flex; 
-}
+  /* Hide header on login page */
+  #app:has(.loginWrapper) .appHeader {
+    display: none;
+  }
 
-.modal-content {
-  background: #fff;
-  color: #333;
-  width: 92%;
-  max-width: 400px;
-  border-radius: 12px;
-  padding: 35px 25px;
-  text-align: center;
-  animation: slideDown 0.3s ease;
-}
+  .headerContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+  .appHeader h1 {
+    color: white;
+    font-size: 2rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    font-weight: 700;
+  }
 
-.modal-title {
-  font-weight: 700;
-  font-size: 1.4rem;
-  margin-bottom: 8px;
-  color: #333;
-}
+  /* User Section */
+  .userSection {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
 
-.modal-message { 
-  font-size: 0.95rem; 
-  color: #555; 
-  margin-bottom: 20px; 
-}
+  .welcomeText {
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
 
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
+  .logoutButton {
+    padding: 8px 20px;
+    background: #ffc107;
+    border: 2px solid white;
+    color: #000;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
 
-.modal-btn {
-  padding: 12px 30px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
+  .logoutButton:hover {
+    background: greenyellow;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
 
-.modal-btn-cancel {
-  background: #ddd;
-  color: #262626;
-}
+  /* Main content */
+  .appMain {
+    flex: 1;
+    padding: 20px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+  }
 
-.modal-btn-cancel:hover {
-  background: #c0c0c0;
-}
+  /* Remove padding on login page for full-screen experience */
+  #app:has(.loginWrapper) .appMain {
+    padding: 0;
+    max-width: 100%;
+  }
 
-.modal-btn-confirm {
-  background: #ffc107;
-  color: #000;
-}
+  /* Footer */
+  .appFooter {
+    text-align: center;
+    padding: 15px;
+    color: white;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.2);
+  }
 
-.modal-btn-confirm:hover {
-  background: greenyellow;
-  transform: translateY(-2px);
-}
+  /* Hide footer on login page */
+  #app:has(.loginWrapper) .appFooter {
+    display: none;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .appHeader h1 {
+      font-size: 1.5rem;
+    }
+    
+    .headerContent {
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .userSection {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .welcomeText {
+      font-size: 0.85rem;
+    }
+  }
 </style>

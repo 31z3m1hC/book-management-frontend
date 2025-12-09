@@ -2,72 +2,72 @@
   <div class="page">
     <div class="container">
 
-    <div class="top-bar">
-      <div class="profile-section">
+    <div class="topBar">
+      <div class="profileSection">
         <!-- Profile picture -->
-        <img src="@/assets/profile.png" alt="Profile" class="profile-pic" />
+        <img src="@/assets/profile.png" alt="Profile" class="profilePic" />
       </div>
     </div>
 
       <!-- Header Buttons -->
       <div class="header">
-          <button class="btn-add counter-btn" disabled>
+          <button class="buttonAdd counterButton" disabled>
             Published: {{ publishedCount }}
           </button>
-         <button class="btn-add counter-btn" disabled>
+         <button class="buttonAdd counterButton" disabled>
             Unpublished: {{ unpublishedCount }}
          </button>
-        <button v-if="isAdmin" @click="showAddForm = true" class="btn-add">Add New Book</button>
+        <button v-if="isAdmin" @click="showAddForm = true" class="buttonAdd">Add New Book</button>
        
-        <button @click="refreshBooks" class="btn-add">Refresh</button>
-        <button @click="showFilterForm = true" class="btn-add">Filter</button>
+        <button @click="refreshBooks" class="buttonAdd">Refresh</button>
+        <button @click="showFilterForm = true" class="buttonAdd">Filter</button>
       </div>
 
       <!-- Search Bar -->
-      <div class="search-section">
+      <div class="searchSection">
         <input 
           v-model="searchQuery" 
           @input="updateLiveFilter"
           @keyup.enter="handleSearch"
           placeholder="Search by title, author, ISBN, year, or publication status..."
-          class="search-input"
+          class="searchInput"
         >
-        <button @click="handleSearch" class="btn-search">Search</button>
+        <button @click="handleSearch" class="searchButton">Search</button>
       </div>
 
       <!-- Add/Edit Form Modal -->
       <div v-if="showAddForm || editingBook" class="modal" @click.self="closeForm">
-        <div class="form-container">
+        <div class="formContainer">
           <h2>{{ editingBook ? 'Edit Book' : 'Add New Book' }}</h2>
           <form @submit.prevent="saveBook">
-            <div class="form-group">
+            <div class="formGroup">
               <label>Title</label>
               <input v-model="form.title" required>
             </div>
 
-            <div class="form-group">
+            <div class="formGroup">
               <label>Author</label>
               <input v-model="form.author" required>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
+            <div class="formRow">
+              <div class="formGroup">
                 <label>Year</label>
                 <input v-model.number="form.yearPublished" type="number" required>
               </div>
 
-              <div class="form-group">
+              <div class="formGroup">
                 <label>Rating</label>
                 <input v-model.number="form.rating" type="number" min="0" max="5" step="0.1" required>
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="formGroup">
               <label>ISBN</label>
               <input v-model="form.isbn" required :disabled="editingBook">
             </div>
 
-            <div class="form-group">
+            <div class="formGroup">
               <label>Book Content</label>
               <textarea 
                 v-model="form.content" 
@@ -77,16 +77,16 @@
               ></textarea>
             </div>
 
-            <div class="form-group checkbox-group">
+            <div class="formGroup checkboxGroup">
               <label>
                 <input type="checkbox" v-model="form.published">
                 <span>Published: {{ form.published ? 'True' : 'False' }}</span>
               </label>
             </div>
 
-            <div class="form-actions">
-              <button type="submit" class="btn-save">Save</button>
-              <button type="button" @click="closeForm" class="btn-cancel">Cancel</button>
+            <div class="formActions">
+              <button type="submit" class="saveButton">Save</button>
+              <button type="button" @click="closeForm" class="cancelButton">Cancel</button>
             </div>
           </form>
         </div>
@@ -94,69 +94,69 @@
 
       <!-- Book Content Modal -->
       <div v-if="showContentModal" class="modal show" @click="handleContentModalBackdropClick">
-        <div class="content-modal-container">
-          <div class="content-header">
+        <div class="contentModalContainer">
+          <div class="contentHeader">
             <h2>{{ selectedBook?.title }}</h2>
-            <button @click="closeContentModal" class="close-btn">✕</button>
+            <button @click="closeContentModal" class="closeButton">✕</button>
           </div>
-          <div class="content-author">by {{ selectedBook?.author }}</div>
-          <div class="content-body">
+          <div class="contentAuthor">by {{ selectedBook?.author }}</div>
+          <div class="contentBody">
             <p v-if="selectedBook?.content">{{ selectedBook.content }}</p>
-            <p v-else class="no-content">No content available for this book.</p>
+            <p v-else class="noContent">No content available for this book.</p>
           </div>
         </div>
       </div>
 
       <!-- Delete Confirmation Modal -->
       <div v-if="showDeleteModal" class="modal show" @click="handleDeleteModalBackdropClick">
-        <div class="modal-content">
-          <div class="modal-title">Confirm Delete</div>
-          <div class="modal-message">Are you sure you want to delete this book? This action cannot be undone.</div>
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn-cancel" @click="closeDeleteModal">Cancel</button>
-            <button class="modal-btn modal-btn-delete" @click="confirmDelete">Delete</button>
+        <div class="modalContent">
+          <div class="modalTitle">Confirm Delete</div>
+          <div class="modalMessage">Are you sure you want to delete this book? This action cannot be undone.</div>
+          <div class="modalActions">
+            <button class="modalButton modalCancelButton" @click="closeDeleteModal">Cancel</button>
+            <button class="modalButton modalDeleteButton" @click="confirmDelete">Delete</button>
           </div>
         </div>
       </div>
 
       <!-- Filter Form Modal -->
       <div v-if="showFilterForm" class="modal" @click.self="closeFilterForm">
-        <div class="form-container">
+        <div class="formContainer">
           <h2>Filter Books</h2>
           <form @submit.prevent="applyFilter">
-            <div class="form-group">
+            <div class="formGroup">
               <label>Title</label>
               <input v-model="filterCriteria.title" placeholder="Filter by title">
             </div>
 
-            <div class="form-group">
+            <div class="formGroup">
               <label>Author</label>
               <input v-model="filterCriteria.author" placeholder="Filter by author">
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
+            <div class="formRow">
+              <div class="formGroup">
                 <label>Year</label>
                 <input v-model.number="filterCriteria.year" type="number" placeholder="Filter by year">
               </div>
-              <div class="form-group">
+              <div class="formGroup">
                 <label> Rating</label>
                 <input v-model.number="filterCriteria.rating" type="number" min="0" max="5" step="0.1">
               </div>
             </div>
 
-          <div class="form-group">
+          <div class="formGroup">
             <label>Publication Status</label>
-              <select v-model="filterCriteria.status" class="dropdown-input">
+              <select v-model="filterCriteria.status" class="dropdownInput">
                   <option value="">All</option>
                   <option value="published">Published</option>
                   <option value="unpublished">Unpublished</option>
               </select>
           </div>
 
-            <div class="form-actions">
-              <button type="submit" class="btn-save">Apply Filter</button>
-              <button type="button" @click="closeFilterForm" class="btn-cancel">Cancel</button>
+            <div class="formActions">
+              <button type="submit" class="saveButton">Apply Filter</button>
+              <button type="button" @click="closeFilterForm" class="cancelButton">Cancel</button>
             </div>
           </form>
         </div>
@@ -179,11 +179,11 @@
           @click="viewBookContent(book)"
         >
           <!-- Dropdown Menu Button (Admin Only) -->
-          <div v-if="isAdmin" class="card-menu">
-            <button @click.stop="toggleMenu(book._id)" class="menu-btn">⋮</button>
-          <div v-if="activeMenu === book._id" class="dropdown-menu">
-              <button @click.stop="editBook(book)" class="menu-item edit-item btn-add">Edit</button>
-              <button @click.stop="deleteBook(book._id)" class="menu-item delete-item btn-add">Delete</button>
+          <div v-if="isAdmin" class="cardMenu">
+            <button @click.stop="toggleMenu(book._id)" class="menuButton">⋮</button>
+          <div v-if="activeMenu === book._id" class="dropdownMenu">
+              <button @click.stop="editBook(book)" class="menuItem editItem buttonAdd">Edit</button>
+              <button @click.stop="deleteBook(book._id)" class="menuItem deleteItem buttonAdd">Delete</button>
           </div>
 
           </div>
@@ -508,7 +508,7 @@ export default {
     },
 
     closeMenuOnClickOutside(event) {
-      if (!event.target.closest('.card-menu')) {
+      if (!event.target.closest('.cardMenu')) {
         this.activeMenu = null;
       }
     },
@@ -596,7 +596,7 @@ export default {
   flex-wrap: wrap;   
 }
 
-.header .btn-add {
+.header .buttonAdd {
   background-color: #ffc107;
   color: #000;
   padding: 8px 16px;
@@ -609,22 +609,22 @@ export default {
   flex: 0 0 auto;   
 }
 
-.header .btn-add:hover {
+.header .buttonAdd:hover {
   background: greenyellow;
 }
 
-.btn-add:hover {
+.buttonAdd:hover {
   background: greenyellow;
 }
 
-.search-section {
+.searchSection {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.search-input {
+.searchInput {
   flex: 1;
   padding: 12px 20px;
   border: 2px solid rgba(255,255,255,0.3);
@@ -634,16 +634,16 @@ export default {
   font-size: 1rem;
 }
 
-.search-input::placeholder {
+.searchInput::placeholder {
   color: rgba(0,0,0,0.5);
 }
 
-.search-input:focus {
+.searchInput:focus {
   outline: none;
   border-color: #ffd166;
 }
 
-.btn-search {
+.searchButton {
   padding: 12px 25px;
   background: #667eea;
   color: white;
@@ -653,7 +653,7 @@ export default {
   cursor: pointer;
 }
 
-.btn-search:hover {
+.searchButton:hover {
   background: #ffbd3d;
 }
 
@@ -670,7 +670,7 @@ export default {
   z-index: 1000;
 }
 
-.form-container {
+.formContainer {
   background: #667eea;
   color: white;
   padding: 30px;
@@ -681,22 +681,22 @@ export default {
   overflow-y: auto;
 }
 
-.form-container h2 {
+.formContainer h2 {
   margin-bottom: 20px;
   color: white;
 }
 
-.form-group {
+.formGroup {
   margin-bottom: 15px;
 }
 
-.form-group label {
+.formGroup label {
   display: block;
   margin-bottom: 5px;
   font-weight: 600;
 }
 
-.form-group input {
+.formGroup input {
   width: 100%;
   padding: 10px;
   border: 2px solid #ddd;
@@ -704,7 +704,7 @@ export default {
   font-size: 1rem;
 }
 
-.form-group input:disabled {
+.formGroup input:disabled {
   background: #f5f5f5;
 }
 
@@ -719,30 +719,30 @@ export default {
   min-height: 150px;
 }
 
-.checkbox-group label {
+.checkboxGroup label {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.checkbox-group input[type="checkbox"] {
+.checkboxGroup input[type="checkbox"] {
   width: auto;
   cursor: pointer;
 }
 
-.form-row {
+.formRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.form-actions {
+.formActions {
   display: flex;
   gap: 10px;
   margin-top: 20px;
 }
 
-.btn-save, .btn-cancel {
+.saveButton, .cancelButton {
   flex: 1;
   padding: 10px;
   border: none;
@@ -751,22 +751,22 @@ export default {
   cursor: pointer;
 }
 
-.btn-save {
+.saveButton {
   background: #ffc107; 
   color: white;
 }
 
-.btn-cancel {
+.cancelButton {
   background: #ddd;
   color: #262626;
 }
 
-.btn-save:hover {
+.saveButton:hover {
   background: greenyellow;
   color: #000;
 }
 
-.counter-btn,.btn-cancel:hover {
+.counterButton,.cancelButton:hover {
   background: greenyellow;
   color: #000;
 }
@@ -801,13 +801,13 @@ export default {
   background: magenta;
 }
 
-.card-menu {
+.cardMenu {
   position: absolute;
   top: 10px;
   right: 10px;
 }
 
-.menu-btn {
+.menuButton {
   background: rgba(255,255,255,0.2);
   color: white;
   border: none;
@@ -822,11 +822,11 @@ export default {
   transition: background 0.3s;
 }
 
-.menu-btn:hover {
+.menuButton:hover {
   background: rgba(255,255,255,0.3);
 }
 
-.dropdown-menu {
+.dropdownMenu {
   position: absolute;
   top: 35px;
   right: 0;
@@ -838,7 +838,7 @@ export default {
   min-width: 120px;
 }
 
-.menu-item {
+.menuItem {
   display: block;
   width: 100%;
   padding: 10px 15px;
@@ -851,15 +851,15 @@ export default {
   transition: background 0.2s;
 }
 
-.menu-item:hover {
+.menuItem:hover {
   background: #f5f5f5;
 }
 
-.edit-item {
+.editItem {
   color: #667eea;
 }
 
-.delete-item {
+.deleteItem {
   color: #f15b5b;
 }
 
@@ -887,7 +887,7 @@ export default {
   color: #fff;
 }
 
-.dropdown-input {
+.dropdownInput {
   width: 100%;
   padding: 10px;
   border: 2px solid #ddd;
@@ -898,40 +898,40 @@ export default {
   appearance: none;      
 }
 
-.dropdown-input option {
+.dropdownInput option {
   background: white;     
   color: #262626;       
 }
 
-.header .btn-add {
+.header .buttonAdd {
   flex: 1;               
   text-align: center;    
   min-width: 120px;      
 }
 
-.counter-btn {
+.counterButton {
   cursor: default;
   opacity: 0.95;
 }
 
-.counter-btn {
+.counterButton {
   background-color: #ffc107;
 }
 
-.top-bar {
+.topBar {
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
   margin-bottom: 30px;
 }
 
-.profile-section {
+.profileSection {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.profile-pic {
+.profilePic {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -946,7 +946,7 @@ export default {
     align-items: stretch;
   }
 
-  .header .btn-add {
+  .header .buttonAdd {
     width: 100%;             
     font-size: 16px;          
     margin-bottom: 8px;       
@@ -958,7 +958,7 @@ export default {
   display: flex; 
 }
 
-.modal-content {
+.modalContent {
   background: #fff;
   color: #333;
   width: 92%;
@@ -974,26 +974,26 @@ export default {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.modal-title {
+.modalTitle {
   font-weight: 700;
   font-size: 1.4rem;
   margin-bottom: 8px;
   color: #333;
 }
 
-.modal-message { 
+.modalMessage { 
   font-size: 0.95rem; 
   color: #555; 
   margin-bottom: 20px; 
 }
 
-.modal-actions {
+.modalActions {
   display: flex;
   gap: 10px;
   justify-content: center;
 }
 
-.modal-btn {
+.modalButton {
   padding: 12px 30px;
   border: none;
   border-radius: 8px;
@@ -1003,27 +1003,27 @@ export default {
   transition: all 0.25s ease;
 }
 
-.modal-btn-cancel {
+.modalCancelButton {
   background: #ddd;
   color: #262626;
 }
 
-.modal-btn-cancel:hover {
+.modalCancelButton:hover {
   background: #c0c0c0;
 }
 
-.modal-btn-delete {
+.modalDeleteButton {
   background: #f15b5b;
   color: white;
 }
 
-.modal-btn-delete:hover {
+.modalDeleteButton:hover {
   background: #d84848;
   transform: translateY(-2px);
 }
 
 /* Book Content Modal */
-.content-modal-container {
+.contentModalContainer {
   background: white;
   border-radius: 12px;
   width: 90%;
@@ -1035,7 +1035,7 @@ export default {
   animation: slideDown 0.3s ease;
 }
 
-.content-header {
+.contentHeader {
   background: #667eea;
   color: white;
   padding: 20px 30px;
@@ -1044,12 +1044,12 @@ export default {
   align-items: center;
 }
 
-.content-header h2 {
+.contentHeader h2 {
   margin: 0;
   font-size: 1.5rem;
 }
 
-.close-btn {
+.closeButton {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
@@ -1064,11 +1064,11 @@ export default {
   transition: background 0.3s;
 }
 
-.close-btn:hover {
+.closeButton:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-.content-author {
+.contentAuthor {
   padding: 15px 30px;
   background: #f5f5f5;
   color: #666;
@@ -1076,7 +1076,7 @@ export default {
   border-bottom: 1px solid #ddd;
 }
 
-.content-body {
+.contentBody {
   padding: 30px;
   overflow-y: auto;
   flex: 1;
@@ -1085,12 +1085,12 @@ export default {
   font-size: 1rem;
 }
 
-.content-body p {
+.contentBody p {
   white-space: pre-wrap;
   margin: 0;
 }
 
-.no-content {
+.noContent {
   color: #999;
   font-style: italic;
   text-align: center;
