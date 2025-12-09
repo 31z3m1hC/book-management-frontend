@@ -15,6 +15,7 @@
           Unpublished: {{ unpublishedCount }}
         </button>
         <button v-if="isAdmin" @click="showAddForm = true" class="buttonAdd">Add New Book</button>
+        <!-----<button v-if="isAdmin" @click="loadSampleBooks" class="buttonAdd">Load Sample Books</button>---->
         <button @click="refreshBooks" class="buttonAdd">Refresh</button>
         <button @click="showFilterForm = true" class="buttonAdd">Filter</button>
       </div>
@@ -59,13 +60,12 @@
               <input v-model="form.isbn" required :disabled="editingBook">
             </div>
             <div class="formGroup">
-              <label>Book Content / Online Link</label>
-              <textarea
+              <label>Book Link (URL)</label>
+              <input
                 v-model="form.content"
-                placeholder="Enter book content, chapters, or online link..."
-                rows="8"
-                class="content-textarea"
-              ></textarea>
+                placeholder="https://www.gutenberg.org/ebooks/12345"
+                class="linkInput"
+              />
             </div>
             <div class="formGroup checkboxGroup">
               <label>
@@ -85,7 +85,7 @@
       <transition name="toast">
         <div v-if="showToast" class="toast">
           <div class="toastContent">
-            <span class="toastIcon">⚠️</span>
+            <span class="toastIcon"></span>
             <span class="toastMessage">{{ toastMessage }}</span>
           </div>
         </div>
@@ -388,31 +388,6 @@
           window.open(book.content, '_blank', 'noopener,noreferrer');
         },
 
-        isValidUrl(string) {
-          // Removed - not needed anymore
-        },
-
-        showErrorToast(message) {
-          this.toastMessage = message;
-          this.showToast = true;
-          
-          setTimeout(() => {
-            this.showToast = false;
-          }, 3000);
-        },
-
-        viewBookContent(book) {
-          // Removed - no longer needed
-        },
-
-        closeContentModal() {
-          // Removed - no longer needed
-        },
-
-        handleContentModalBackdropClick(e) {
-          // Removed - no longer needed
-        },
-
         handleDeleteModalBackdropClick(e) {
           if (e.target.classList.contains("modal")) this.closeDeleteModal();
         },
@@ -635,15 +610,9 @@
   background: #f5f5f5;
 }
 
-.content-textarea {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  font-size: 0.95rem;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 150px;
+.linkInput {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
 }
 
 .checkboxGroup label {
