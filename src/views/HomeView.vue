@@ -373,31 +373,43 @@
           this.showFilterForm = false;
         },
 
+        openBookLink(book) {
+          // Prevent the event from bubbling if called from template
+          event?.stopPropagation();
+          
+          if (!book.content || book.content.trim() === '') {
+            alert('This book has no link available');
+            return;
+          }
+
+          let url = book.content.trim();
+
+          // Ensure URL has a protocol
+          if (!url.match(/^https?:\/\//i)) {
+            url = 'https://' + url;
+          }
+
+          try {
+            // Open in new tab with security features
+            const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+            
+            // Check if popup was blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+              // Popup was blocked, show alternative
+              if (confirm(`Popup blocked. The link is:\n${url}\n\nClick OK to try opening again.`)) {
+                window.location.href = url;
+              }
+            }
+          } catch (err) {
+            console.error('Error opening link:', err);
+            alert('Unable to open link. Please copy and paste it manually:\n' + url);
+          }
+        },
+
+        // Also update handleCardClick to just call openBookLink
         handleCardClick(book) {
           this.openBookLink(book);
         },
-
-    openBookLink(book) {
-      if (!book.content || book.content.trim() === '') {
-        alert('This book has no link available');
-        return;
-      }
-
-      let url = book.content.trim();
-
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-
-      try {
-        window.open(url, '_blank');
-      } catch (err) {
-        alert('Unable to open link. Please copy and paste it manually:\n' + url);
-      }
-    },
-
-
-
 
         handleDeleteModalBackdropClick(e) {
           if (e.target.classList.contains("modal")) this.closeDeleteModal();
