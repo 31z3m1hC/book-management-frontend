@@ -378,27 +378,21 @@
         },
 
         openBookLink(book) {
-        // Check if content exists
-        if (!book.content || book.content.trim() === '') {
-          alert('This book has no link available');
-          return;
-        }
+          // Check if content exists
+          if (!book.content || book.content.trim() === '') {
+            alert('This book has no link available');
+            return;
+          }
 
-        // Make sure URL has protocol
-        let url = book.content.trim();
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          url = 'https://' + url;
-        }
+          // Make sure URL has protocol
+          let url = book.content.trim();
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+          }
 
-        // Create a temporary anchor element to open link
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
+          // Create a temporary anchor element to open link
+          window.location.href = url;
+        },
 
 
         handleDeleteModalBackdropClick(e) {
