@@ -377,22 +377,25 @@
           this.openBookLink(book);
         },
 
-      openBookLink(book) {
-        if (!book.content || book.content.trim() === '') {
-          alert('This book has no link available');
-          return;
-        }
+    openBookLink(book) {
+      if (!book.content || book.content.trim() === '') {
+        alert('This book has no link available');
+        return;
+      }
 
-        let url = book.content.trim();
+      let url = book.content.trim();
 
-        // Ensure it's a full URL
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          url = 'https://' + url;
-        }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
 
-        // Open in a new tab to avoid Vue Router intercept
+      try {
         window.open(url, '_blank');
-      },
+      } catch (err) {
+        alert('Unable to open link. Please copy and paste it manually:\n' + url);
+      }
+    },
+
 
 
 
