@@ -153,7 +153,7 @@
           v-for="book in displayedBooks"
           :key="book._id"
           class="card"
-          @click="handleCardClick(book)"
+          @click.prevent.stop="handleCardClick($event, book)"
         >
           <div v-if="isAdmin" class="cardMenu">
             <button @click.stop="toggleMenu(book._id)" class="menuButton">⋮</button>
@@ -373,10 +373,34 @@
           this.showFilterForm = false;
         },
 
-        handleCardClick(book) {
+// Replace your handleCardClick method with this version that prevents the default behavior
+
+        handleCardClick(event, book) {
+          // Stop all event propagation
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          
           console.log('Card clicked:', book.title);
           console.log('Book content:', book.content);
-          this.openBookLink(book);
+          
+          // Directly open the link without calling any other methods
+          if (!book.content || book.content.trim() === '') {
+            alert('This book has no link available');
+            return;
+          }
+
+          let url = book.content.trim();
+
+          // Ensure URL has a protocol
+          if (!url.match(/^https?:\/\//i)) {
+            url = 'https://' + url;
+          }
+
+          console.log('Opening URL:', url);
+
+          // Open immediately
+          window.open(url, '_blank', 'noopener,noreferrer');
         },
 
         openBookLink(book) {
