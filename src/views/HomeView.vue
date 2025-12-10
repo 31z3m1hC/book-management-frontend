@@ -153,7 +153,7 @@
           v-for="book in displayedBooks"
           :key="book._id"
           class="card"
-          @click.prevent.stop="handleCardClick($event, book)"
+          @click="handleCardClick($event, book)"
         >
           <div v-if="isAdmin" class="cardMenu">
             <button @click.stop="toggleMenu(book._id)" class="menuButton">⋮</button>
@@ -373,18 +373,12 @@
           this.showFilterForm = false;
         },
 
-// Replace your handleCardClick method with this version that prevents the default behavior
-
         handleCardClick(event, book) {
-          // Stop all event propagation
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
+          // Only open link if click wasn't on menu button or menu items
+          if (event.target.closest('.cardMenu') || event.target.closest('.menuButton') || event.target.closest('.dropdownMenu')) {
+            return;
+          }
           
-          console.log('Card clicked:', book.title);
-          console.log('Book content:', book.content);
-          
-          // Directly open the link without calling any other methods
           if (!book.content || book.content.trim() === '') {
             alert('This book has no link available');
             return;
@@ -397,9 +391,7 @@
             url = 'https://' + url;
           }
 
-          console.log('Opening URL:', url);
-
-          // Open immediately
+          // Open in new tab
           window.open(url, '_blank', 'noopener,noreferrer');
         },
 
