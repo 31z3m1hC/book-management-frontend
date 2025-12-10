@@ -376,23 +376,35 @@
         handleCardClick(book) {
           this.openBookLink(book);
         },
+// ... (rest of the script)
 
-        openBookLink(book) {
-          // Check if content exists
-          if (!book.content || book.content.trim() === '') {
-            alert('This book has no link available');
-            return;
-          }
-
-          // Make sure URL has protocol
-          let url = book.content.trim();
-          if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
-          }
-
-          // Create a temporary anchor element to open link
-          window.location.href = url;
+        handleCardClick(book) {
+            this.openBookLink(book);
         },
+
+          openBookLink(book) {
+              // 1. Extract link data from book content
+              const linkData = book.content && book.content.content ? book.content.content.trim() : '';
+
+              // 2. Check if content exists and is not empty
+              if (!linkData) {
+                  alert('This book has no link available (Content field is empty or missing).');
+                  return;
+              }
+              
+              // 3. Prepare the URL
+              let url = linkData;
+              
+              // Make sure URL has protocol (http:// or https://)
+              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                  url = 'https://' + url;
+              }
+              
+              // 4. Open the link in a new tab/window for external navigation
+              window.open(url, '_blank'); 
+          },
+          
+
 
 
         handleDeleteModalBackdropClick(e) {
